@@ -9,6 +9,7 @@ import adminRoutes from "../routes/adminRoutes.js";
 import karyawanRoutes from "../routes/karyawanRoutes.js";
 import customerRoutes from "../routes/customerRoutes.js";
 import orderKaryawanRoutes from "../routes/orderKaryawanRoutes.js";
+import cartRoutes from "../routes/cartRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/karyawan", karyawanRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/karyawan/order", orderKaryawanRoutes); // ✅ Kasir & Dapur khusus order
+app.use("/api/cart", cartRoutes);
 
 // 🛠️ MongoDB connection
 mongoose
