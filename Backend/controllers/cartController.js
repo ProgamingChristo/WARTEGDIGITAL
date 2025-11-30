@@ -1,17 +1,21 @@
 import Cart from "../models/Cart.js";
 import Menu from "../models/Menu.js";
+import Customer from "../models/Customer.js";
+import Order from "../models/Orders.js";
 
 // ============================
 // 🔹 Helper Hitung Total
 // ============================
 const calculateTotal = async (items) => {
   let total = 0;
+
   for (const item of items) {
     const menu = await Menu.findById(item.menuId);
     if (menu) {
       total += menu.price * item.qty;
     }
   }
+
   return total;
 };
 
@@ -21,8 +25,10 @@ const calculateTotal = async (items) => {
 export const getCart = async (req, res) => {
   try {
     const customerId = req.user.id;
+
     let cart = await Cart.findOne({ customerId }).populate("items.menuId");
 
+    // Jika cart belum ada → buat baru
     if (!cart) {
       cart = new Cart({ customerId, items: [], totalPrice: 0 });
       await cart.save();
@@ -30,7 +36,10 @@ export const getCart = async (req, res) => {
 
     res.json({ message: "Data cart berhasil diambil", data: cart });
   } catch (error) {
-    res.status(500).json({ message: "Gagal mengambil cart", error: error.message });
+    res.status(500).json({
+      message: "Gagal mengambil cart",
+      error: error.message,
+    });
   }
 };
 
@@ -48,7 +57,10 @@ export const addToCart = async (req, res) => {
       cart = new Cart({ customerId, items: [] });
     }
 
-    const existingItem = cart.items.find((item) => item.menuId.toString() === menuId);
+    // Cek apakah item sudah ada
+    const existingItem = cart.items.find(
+      (item) => item.menuId.toString() === menuId
+    );
 
     if (existingItem) {
       existingItem.qty += qty;
@@ -61,7 +73,10 @@ export const addToCart = async (req, res) => {
 
     res.json({ message: "Item berhasil ditambahkan ke cart", data: cart });
   } catch (error) {
-    res.status(500).json({ message: "Gagal menambah item", error: error.message });
+    res.status(500).json({
+      message: "Gagal menambah item",
+      error: error.message,
+    });
   }
 };
 
@@ -77,7 +92,8 @@ export const updateCartItem = async (req, res) => {
     if (!cart) return res.status(404).json({ message: "Cart tidak ditemukan" });
 
     const item = cart.items.find((i) => i.menuId.toString() === menuId);
-    if (!item) return res.status(404).json({ message: "Item tidak ditemukan" });
+    if (!item)
+      return res.status(404).json({ message: "Item tidak ditemukan di cart" });
 
     item.qty = qty;
 
@@ -86,7 +102,10 @@ export const updateCartItem = async (req, res) => {
 
     res.json({ message: "Item berhasil diperbarui", data: cart });
   } catch (error) {
-    res.status(500).json({ message: "Gagal update item", error: error.message });
+    res.status(500).json({
+      message: "Gagal update item",
+      error: error.message,
+    });
   }
 };
 
@@ -108,7 +127,10 @@ export const deleteCartItem = async (req, res) => {
 
     res.json({ message: "Item berhasil dihapus", data: cart });
   } catch (error) {
-    res.status(500).json({ message: "Gagal menghapus item", error: error.message });
+    res.status(500).json({
+      message: "Gagal menghapus item",
+      error: error.message,
+    });
   }
 };
 
@@ -128,6 +150,62 @@ export const clearCart = async (req, res) => {
 
     res.json({ message: "Cart berhasil dikosongkan", data: cart });
   } catch (error) {
-    res.status(500).json({ message: "Gagal clear cart", error: error.message });
+    res.status(500).json({
+      message: "Gagal clear cart",
+      error: error.message,
+    });
+  }
+};
+
+// ============================
+// 🟣 CHECKOUT CART (FINAL FIX)
+// ============================
+export const checkoutCart = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+
+    // Ambil cart dari Model Cart
+    const cart = await Cart.findOne({ customerId });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart masih kosong!" });
+    }
+
+    // Ambil data customer
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer tidak ditemukan" });
+    }
+
+    // Hitung total
+    let totalPrice = await calculateTotal(cart.items);
+
+    // Buat order
+    const newOrder = new Order({
+      customerName: customer.name,
+      items: cart.items,
+      totalPrice,
+      createdBy: customerId,
+      paymentStatus: "unpaid",
+      status: "pending",
+      assignedToKitchen: false,
+    });
+
+    await newOrder.save();
+
+    // Kosongkan cart
+    cart.items = [];
+    cart.totalPrice = 0;
+    await cart.save();
+
+    res.status(201).json({
+      message: "Checkout berhasil! Pesanan masuk ke kasir.",
+      data: newOrder,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Checkout gagal",
+      error: error.message,
+    });
   }
 };

@@ -4,7 +4,8 @@ import {
   addToCart,
   updateCartItem,
   deleteCartItem,
-  clearCart
+  clearCart,
+  checkoutCart // ✅ Tambahkan checkout
 } from "../controllers/cartController.js";
 
 import { verifyToken, verifyCustomer } from "../middleware/authMiddleware.js";
@@ -25,5 +26,8 @@ router.delete("/delete/:menuId", verifyToken, verifyCustomer, deleteCartItem);
 
 // Clear cart
 router.delete("/clear", verifyToken, verifyCustomer, clearCart);
+
+// ✅ Checkout → Cart menjadi Order
+router.post("/checkout", verifyToken, verifyCustomer, checkoutCart);
 
 export default router;
