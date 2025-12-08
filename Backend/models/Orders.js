@@ -13,35 +13,43 @@ const orderSchema = new mongoose.Schema(
 
     totalPrice: { type: Number, required: true },
 
-    // ✅ Status order lebih lengkap untuk workflow customer → kasir → dapur
+    // Status order (lengkap untuk semua tahap)
     status: {
       type: String,
-      enum: ["waiting", "pending", "cooking", "done", "delivered"],
+      // include semua state yang pernah dipakai: waiting (baru), pending, processing, cooking, done, delivered
+      enum: ["waiting", "pending", "processing", "cooking", "done", "delivered"],
       default: "waiting",
     },
 
+    // Payment status (tambahkan processing karena dipakai saat midtrans checkout sementara menunggu webhook)
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "paid"],
+      enum: ["unpaid", "processing", "paid"],
       default: "unpaid",
     },
 
+    // createdBy bisa berisi Customer atau Karyawan (kasir)
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer", // ✅ Customer yang membuat pesanan
+      ref: "Customer",
       required: true,
     },
 
     assignedToKitchen: {
       type: Boolean,
-      default: true, // ✅ Pesanan otomatis masuk dapur setelah dibuat
+      default: false,
     },
 
+    // cookingStatus ditambahkan "waiting" untuk menghindari validasi error
     cookingStatus: {
       type: String,
-      enum: ["pending", "cooking", "done"],
-      default: "pending",
+      enum: ["waiting", "pending", "cooking", "done"],
+      default: "waiting",
     },
+
+    // optional extra fields for midtrans integration
+    paymentMethod: { type: String, enum: ["cash", "midtrans"], default: "cash" },
+    midtransOrderId: { type: String },
   },
   { timestamps: true }
 );

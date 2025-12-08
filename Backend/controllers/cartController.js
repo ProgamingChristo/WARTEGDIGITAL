@@ -2,6 +2,8 @@ import Cart from "../models/Cart.js";
 import Menu from "../models/Menu.js";
 import Customer from "../models/Customer.js";
 import Order from "../models/Orders.js";
+import { createMidtransTransaction } from "../controllers/midtransController.js";
+
 
 // ============================
 // 🔹 Helper Hitung Total
@@ -28,7 +30,6 @@ export const getCart = async (req, res) => {
 
     let cart = await Cart.findOne({ customerId }).populate("items.menuId");
 
-    // Jika cart belum ada → buat baru
     if (!cart) {
       cart = new Cart({ customerId, items: [], totalPrice: 0 });
       await cart.save();
@@ -53,11 +54,8 @@ export const addToCart = async (req, res) => {
 
     let cart = await Cart.findOne({ customerId });
 
-    if (!cart) {
-      cart = new Cart({ customerId, items: [] });
-    }
+    if (!cart) cart = new Cart({ customerId, items: [] });
 
-    // Cek apakah item sudah ada
     const existingItem = cart.items.find(
       (item) => item.menuId.toString() === menuId
     );
@@ -158,50 +156,95 @@ export const clearCart = async (req, res) => {
 };
 
 // ============================
-// 🟣 CHECKOUT CART (FINAL FIX)
+// 🟣 CHECKOUT: CASH / MIDTRANS
 // ============================
 export const checkoutCart = async (req, res) => {
   try {
     const customerId = req.user.id;
+    const { paymentMethod } = req.body;
 
-    // Ambil cart dari Model Cart
+    if (!["cash", "midtrans"].includes(paymentMethod)) {
+      return res.status(400).json({
+        message: "Metode pembayaran tidak valid! Gunakan cash atau midtrans.",
+      });
+    }
+
     const cart = await Cart.findOne({ customerId });
-
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart masih kosong!" });
     }
 
-    // Ambil data customer
     const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ message: "Customer tidak ditemukan" });
     }
 
-    // Hitung total
-    let totalPrice = await calculateTotal(cart.items);
+    const totalPrice = await calculateTotal(cart.items);
 
-    // Buat order
-    const newOrder = new Order({
-      customerName: customer.name,
-      items: cart.items,
-      totalPrice,
-      createdBy: customerId,
-      paymentStatus: "unpaid",
-      status: "pending",
-      assignedToKitchen: false,
-    });
+    // ========= CASE 1: CASH =========
+    if (paymentMethod === "cash") {
+      const newOrder = new Order({
+        customerName: customer.name,
+        items: cart.items,
+        totalPrice,
+        createdBy: customerId,
+        paymentStatus: "unpaid",
+        status: "pending",
+        cookingStatus: "pending",
+        assignedToKitchen: false,
+        paymentMethod: "cash",
+      });
 
-    await newOrder.save();
+      await newOrder.save();
 
-    // Kosongkan cart
-    cart.items = [];
-    cart.totalPrice = 0;
-    await cart.save();
+      cart.items = [];
+      cart.totalPrice = 0;
+      await cart.save();
 
-    res.status(201).json({
-      message: "Checkout berhasil! Pesanan masuk ke kasir.",
-      data: newOrder,
-    });
+      return res.status(201).json({
+        message: "Checkout cash berhasil! Silakan bayar di kasir.",
+        data: newOrder,
+      });
+    }
+
+    // ========= CASE 2: MIDTRANS =========
+    if (paymentMethod === "midtrans") {
+      const orderId = "ORDER-" + Date.now();
+
+      const midtransResponse = await createMidtransTransaction(
+        orderId,
+        totalPrice,
+        customer.name,
+        customerId // untuk ambil cart item_details
+      );
+
+      const newOrder = new Order({
+        customerName: customer.name,
+        items: cart.items,
+        totalPrice,
+        createdBy: customerId,
+        paymentStatus: "processing",
+        status: "pending",
+        cookingStatus: "pending",
+        assignedToKitchen: false,
+        paymentMethod: "midtrans",
+        midtransOrderId: orderId,
+      });
+
+      await newOrder.save();
+
+      cart.items = [];
+      cart.totalPrice = 0;
+      await cart.save();
+
+      return res.status(201).json({
+        message: "Checkout Midtrans berhasil",
+        snapToken: midtransResponse.token,
+        redirectUrl: midtransResponse.redirect_url,
+        orderId,
+      });
+    }
+
   } catch (error) {
     res.status(500).json({
       message: "Checkout gagal",

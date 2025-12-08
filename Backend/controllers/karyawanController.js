@@ -2,22 +2,22 @@ import Karyawan from "../models/Karyawan.js";
 import jwt from "jsonwebtoken";
 import Order from "../models/Orders.js";
 
+// ========================
 // ✅ Register Karyawan
+// ========================
 export const registerKaryawan = async (req, res) => {
   try {
     const { name, username, password, position } = req.body;
 
-    // Validasi input
     if (!name || !username || !password || !position) {
       return res.status(400).json({ message: "Semua field wajib diisi!" });
     }
-    // Cek apakah username sudah digunakan
+
     const existingUser = await Karyawan.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: "Username sudah digunakan!" });
     }
 
-    // Buat karyawan baru
     const newKaryawan = new Karyawan({
       name,
       username,
@@ -40,14 +40,13 @@ export const registerKaryawan = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error Register Karyawan:", error);
-    res.status(500).json({
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Terjadi kesalahan server", error: error.message });
   }
 };
 
+// ========================
 // ✅ Login Karyawan
+// ========================
 export const loginKaryawan = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -63,7 +62,7 @@ export const loginKaryawan = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: karyawan._id, role: karyawan.role },
+      { id: karyawan._id, role: karyawan.role, position: karyawan.position },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -81,14 +80,13 @@ export const loginKaryawan = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error Login Karyawan:", error);
-    res.status(500).json({
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Terjadi kesalahan server", error: error.message });
   }
 };
 
-// ✅ Get Semua Karyawan (khusus SuperAdmin)
+// ========================
+// ✅ Get Semua Karyawan
+// ========================
 export const getAllKaryawan = async (req, res) => {
   try {
     const karyawanList = await Karyawan.find().select("-password");
@@ -98,16 +96,16 @@ export const getAllKaryawan = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error Get All Karyawan:", error);
-    res.status(500).json({
-      message: "Terjadi kesalahan server",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Terjadi kesalahan server", error: error.message });
   }
 };
-// ✅ Helper untuk cek jam & shift
+
+// ========================
+// ⏰ Helper validasi shift
+// ========================
 const validateShiftTime = (shift) => {
   const now = new Date();
-  const hour = now.getHours(); // 0 - 23
+  const hour = now.getHours();
 
   if (shift === "pagi" && hour >= 7 && hour < 13) return true;
   if (shift === "siang" && hour >= 13 && hour < 19) return true;
@@ -116,7 +114,9 @@ const validateShiftTime = (shift) => {
   return false;
 };
 
-// ✅ ABSEN KARYAWAN
+// ========================
+// 🟢 Absen Masuk
+// ========================
 export const absenMasuk = async (req, res) => {
   try {
     const karyawanId = req.user.id;
@@ -125,7 +125,6 @@ export const absenMasuk = async (req, res) => {
     if (!karyawan)
       return res.status(404).json({ message: "Karyawan tidak ditemukan" });
 
-    // Cek shift
     if (!validateShiftTime(karyawan.shift)) {
       return res.status(400).json({
         message: `Kamu tidak bisa absen di luar jam shift ${karyawan.shift}`,
@@ -133,8 +132,6 @@ export const absenMasuk = async (req, res) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
-
-    // Cek apakah sudah absen hari ini
     const alreadyAbsen = karyawan.attendance.some(
       (absen) => absen.date.toISOString().split("T")[0] === today
     );
@@ -142,7 +139,6 @@ export const absenMasuk = async (req, res) => {
     if (alreadyAbsen)
       return res.status(400).json({ message: "Sudah absen hari ini!" });
 
-    // Simpan absensi
     karyawan.attendance.push({ status: "hadir" });
     await karyawan.save();
 
@@ -152,14 +148,13 @@ export const absenMasuk = async (req, res) => {
       data: karyawan.attendance,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Terjadi kesalahan saat absen",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Terjadi kesalahan saat absen", error: error.message });
   }
 };
 
-// ✅ ADMIN / SUPERADMIN — GET ABSENSI
+// ========================
+// 📊 Admin Get Absensi
+// ========================
 export const getAllAbsensi = async (req, res) => {
   try {
     const list = await Karyawan.find().select("name position shift attendance");
@@ -168,21 +163,24 @@ export const getAllAbsensi = async (req, res) => {
       data: list,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Gagal mengambil data absensi",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Gagal mengambil data absensi", error: error.message });
   }
 };
-// ======================
-// ✅ Kasir — Konfirmasi Pembayaran
-// ======================
+
+// ========================
+// 💵 Kasir — Konfirmasi Pembayaran
+// ========================
 export const kasirConfirmPayment = async (req, res) => {
   try {
     const orderId = req.params.id;
+
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
-      { paymentStatus: "paid" },
+      {
+        paymentStatus: "paid",
+        assignedToKitchen: true,   // 🔥 WAJIB
+        status: "waiting",         // 🔥 WAJIB BARU MASUK DAPUR
+      },
       { new: true }
     );
 
@@ -202,9 +200,10 @@ export const kasirConfirmPayment = async (req, res) => {
   }
 };
 
-// ======================
-// ✅ Dapur — Lihat Order yang harus dimasak
-// ======================
+
+// ========================
+// 🍳 Dapur — Ambil Order Masak
+// ========================
 export const getOrdersForKitchen = async (req, res) => {
   try {
     const listOrder = await Order.find({
@@ -225,9 +224,9 @@ export const getOrdersForKitchen = async (req, res) => {
   }
 };
 
-// ======================
-// ✅ Dapur — Update Status Masak
-// ======================
+// ========================
+// 🔥 Dapur — Update Status Masak
+// ========================
 export const updateCookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -238,7 +237,10 @@ export const updateCookingStatus = async (req, res) => {
 
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { 
+        status, 
+        cookingStatus: status   // 🔥 FIX UTAMA
+      },
       { new: true }
     );
 

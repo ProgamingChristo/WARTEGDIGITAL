@@ -88,7 +88,24 @@ export const loginCustomer = async (req, res) => {
     });
   }
 };
+// ===============================
+// GET ALL MENU FOR CUSTOMER
+// ===============================
+export const getAllMenuCustomer = async (req, res) => {
+  try {
+    const menus = await Menu.find().select("name price imageUrl");
 
+    res.json({
+      message: "Daftar menu berhasil diambil",
+      data: menus,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Gagal mengambil menu",
+      error: err.message,
+    });
+  }
+};
 // ======================
 // ✅ Customer Buat Order — Harga otomatis
 // ======================
@@ -155,6 +172,78 @@ export const getOrderHistoryCustomer = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Gagal mengambil riwayat pesanan",
+      error: error.message,
+    });
+  }
+};
+// ==============================
+// 🔵 UPDATE USERNAME
+// ==============================
+export const updateUsername = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+    const { username } = req.body;
+
+    if (!username) {
+      return res.status(400).json({ message: "Username baru tidak boleh kosong" });
+    }
+
+    // Cek apakah username sudah dipakai user lain
+    const existing = await Customer.findOne({ username });
+    if (existing && existing._id.toString() !== customerId) {
+      return res.status(400).json({ message: "Username sudah digunakan" });
+    }
+
+    const updated = await Customer.findByIdAndUpdate(
+      customerId,
+      { username },
+      { new: true }
+    );
+
+    res.json({
+      message: "Username berhasil diperbarui",
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal update username",
+      error: error.message,
+    });
+  }
+};
+
+// ==============================
+// 🔐 UPDATE PASSWORD
+// ==============================
+export const updatePassword = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Password lama dan password baru wajib diisi",
+      });
+    }
+
+    const customer = await Customer.findById(customerId);
+
+    // Cek password lama
+    const match = await bcrypt.compare(oldPassword, customer.password);
+    if (!match) {
+      return res.status(400).json({ message: "Password lama salah" });
+    }
+
+    // Hash password baru
+    const hashed = await bcrypt.hash(newPassword, 10);
+    customer.password = hashed;
+
+    await customer.save();
+
+    res.json({ message: "Password berhasil diperbarui" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gagal update password",
       error: error.message,
     });
   }
