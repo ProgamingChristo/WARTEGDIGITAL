@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warteg Digital | Masuk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins (Modern) & Pacifico (Santai/Warung) -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        warung: ['Pacifico', 'cursive'],
+                    },
+                    colors: {
+                        'sambal': '#ef4444',     /* Red-500 */
+                        'kunyit': '#f59e0b',     /* Amber-500 */
+                        'daun': '#15803d',       /* Green-700 */
+                        'kuah': '#fffbeb',       /* Amber-50 */
+                        'kecap': '#451a03',      /* Amber-950 */
+                    },
+                    backgroundImage: {
+                        'pattern-warteg': "url('https://www.transparenttextures.com/patterns/food.png')",
+                    },
+                    animation: {
+                        'goyang': 'goyang 2s ease-in-out infinite',
+                        'muncul': 'muncul 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+                    },
+                    keyframes: {
+                        goyang: {
+                            '0%, 100%': { transform: 'rotate(-5deg)' },
+                            '50%': { transform: 'rotate(5deg)' },
+                        },
+                        muncul: {
+                            '0%': { opacity: '0', transform: 'translateY(50px) scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            /* Pola background halus agar tidak sepi */
+            background-color: #fff7ed;
+            background-image: radial-gradient(#fbbf24 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 8px 8px 0px 0px #15803d; /* Shadow kasar ala retro */
+        }
+
+        /* Styling Input Autofill agar warnanya pas */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #fffbeb inset !important;
+            -webkit-text-fill-color: #451a03 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Decorative Elements (Hiasan Sayuran/Bahan) -->
+    <div class="absolute top-10 left-10 text-orange-400 opacity-20 text-6xl animate-pulse">
+        <i class="fa-solid fa-carrot"></i>
+    </div>
+    <div class="absolute bottom-10 right-10 text-green-500 opacity-20 text-6xl animate-bounce" style="animation-duration: 3s;">
+        <i class="fa-solid fa-leaf"></i>
+    </div>
+    <div class="absolute top-1/2 right-10 text-red-400 opacity-20 text-5xl animate-spin" style="animation-duration: 10s;">
+        <i class="fa-solid fa-pepper-hot"></i>
+    </div>
+
+    <!-- Main Card -->
+    <div class="w-full max-w-md bg-white rounded-3xl border-2 border-orange-200 card-shadow overflow-hidden animate-muncul relative z-10">
+        
+        <!-- Header Image / Banner -->
+        <div class="bg-gradient-to-r from-orange-400 to-amber-500 h-32 flex items-center justify-center relative overflow-hidden">
+            <!-- Pattern Overlay -->
+            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fff 2px, transparent 2px); background-size: 10px 10px;"></div>
+            
+            <div class="text-center relative z-10 transform translate-y-4">
+                <div class="bg-white p-3 rounded-full inline-block shadow-lg animate-goyang">
+                    <i class="fa-solid fa-bowl-food text-4xl text-orange-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="px-8 pb-8 pt-12 text-center bg-kuah">
+            <h1 class="font-warung text-4xl text-kecap mb-1">Warteg Digital</h1>
+            <p class="text-orange-800 text-sm mb-8 font-medium">Perut Kenyang, Hati Senang, Dompet Aman</p>
+
+            <form onsubmit="handleLogin(event)" class="space-y-5 text-left">
+                
+                <!-- Input Email -->
+                <div>
+                    <label class="block text-sm font-bold text-kecap mb-1 ml-1">Nama Pelanggan / Email</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-utensils text-orange-400 group-focus-within:text-orange-600 transition-colors"></i>
+                        </div>
+                        <input type="email" required 
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-orange-200 bg-white text-kecap placeholder-orange-300 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all font-medium"
+                            placeholder="nama@warteg.id">
+                    </div>
+                </div>
+
+                <!-- Input Password -->
+                <div>
+                    <label class="block text-sm font-bold text-kecap mb-1 ml-1">Kode Rahasia</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-lock text-orange-400 group-focus-within:text-orange-600 transition-colors"></i>
+                        </div>
+                        <input type="password" id="password" required
+                            class="w-full pl-10 pr-12 py-3 rounded-xl border-2 border-orange-200 bg-white text-kecap placeholder-orange-300 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all font-medium"
+                            placeholder="••••••••">
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-orange-400 hover:text-orange-600 cursor-pointer">
+                            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lupa Password & Ingat Saya -->
+                <div class="flex items-center justify-between text-xs font-semibold">
+                    <label class="flex items-center text-kecap cursor-pointer hover:text-orange-600">
+                        <input type="checkbox" class="w-4 h-4 rounded text-orange-500 border-orange-300 focus:ring-orange-400 bg-white mr-2">
+                        Langganan Tetap
+                    </label>
+                    <a href="#" class="text-daun hover:underline">Lupa Pesanan?</a>
+                </div>
+
+                <!-- Login Button -->
+                <button id="btnSubmit" type="submit" 
+                    class="w-full bg-daun hover:bg-green-800 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group">
+                    <span>Masuk Warung</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <!-- Divider -->
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-orange-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-orange-400 text-xs font-bold uppercase">Atau gabung pakai</span>
+                    <div class="flex-grow border-t border-orange-200"></div>
+                </div>
+
+                <!-- Social Login (Google & Facebook) -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" class="flex justify-center items-center py-2.5 px-4 border-2 border-orange-100 rounded-xl bg-white text-kecap hover:bg-orange-50 hover:border-orange-300 transition-all font-semibold text-sm">
+                        <i class="fa-brands fa-google text-sambal mr-2"></i> Google
+                    </button>
+                    <button type="button" class="flex justify-center items-center py-2.5 px-4 border-2 border-orange-100 rounded-xl bg-white text-kecap hover:bg-orange-50 hover:border-orange-300 transition-all font-semibold text-sm">
+                        <i class="fa-brands fa-facebook text-blue-600 mr-2"></i> Facebook
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Footer Card -->
+        <div class="bg-orange-100 p-4 text-center border-t border-orange-200">
+            <p class="text-kecap text-xs">
+                Belum punya akun? <a href="#" class="font-bold text-sambal hover:underline">Daftar Jadi Member</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            const originalContent = btn.innerHTML;
+
+            // Loading Animation State
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sedang Menyiapkan...';
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Selamat Makan!';
+                btn.classList.remove('bg-daun', 'hover:bg-green-800');
+                btn.classList.add('bg-sambal', 'text-white');
+                
+                setTimeout(() => {
+                    // Reset button for demo
+                    btn.innerHTML = originalContent;
+                    btn.classList.add('bg-daun', 'hover:bg-green-800');
+                    btn.classList.remove('bg-sambal', 'text-white', 'opacity-80', 'cursor-not-allowed');
+                    alert("Login Berhasil! Selamat menikmati menu digital kami.");
+                }, 1500);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

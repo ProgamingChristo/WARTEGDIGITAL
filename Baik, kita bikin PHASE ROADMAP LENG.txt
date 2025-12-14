@@ -1,0 +1,260 @@
+Baik, kita bikin **PHASE ROADMAP LENGKAP WARTEG DIGITAL** dengan cakupan:
+
+* **Customer Frontend**
+* **Admin Frontend**
+* **Karyawan Frontend**
+* **Superadmin Frontend**
+* **Backend Integrations**
+* **Testing + Deployment**
+
+Strukturnya **lebih profesional**, cocok untuk project production.
+Aku rapikan, kelompokkan, dan beri prioritas.
+
+---
+
+# 🚀 **WARTEG DIGITAL — FULL SYSTEM DEVELOPMENT ROADMAP**
+
+---
+
+# 🧩 **PHASE 1 — PROJECT SETUP (GLOBAL)**
+
+### **1.1 Frontend**
+
+* [x] Setup Vite + React + TypeScript
+* [x] TailwindCSS v4 full migration
+* [x] Remove Bootstrap
+* [x] Folder structure clean (pages, layouts, store, utils, components)
+
+### **1.2 Backend**
+
+* [x] API structure ready (customer, admin, order, payment, menu, cart)
+* [x] Midtrans webhook ready
+* [x] JWT roles: Customer, Admin, Karyawan, Superadmin
+
+---
+
+# 🔐 **PHASE 2 — AUTHENTICATION SYSTEM (GLOBAL ROLE-BASED)**
+
+## **2A. CUSTOMER**
+
+* [x] Register
+* [x] Login
+* [x] Logout
+* [x] Zustand AuthStore
+* [x] Navbar reactive
+* [x] Protect routes for logged-in only
+
+## **2B. ADMIN**
+
+* [ ] Login Admin page
+* [ ] Role check: only admin can access admin dashboard
+* [ ] Admin logout
+* [ ] Middleware in frontend: redirect unauthorized
+
+## **2C. KARYAWAN**
+
+* [ ] Login Karyawan
+* [ ] Role check
+* [ ] Redirect unauthorized
+
+## **2D. SUPERADMIN**
+
+* [ ] Login Superadmin
+* [ ] Manage admin/karyawan accounts
+* [ ] System-level dashboard
+
+---
+
+# 🍽 **PHASE 3 — CUSTOMER MODULE (FRONTEND)**
+
+## **3A. Menu**
+
+* [x] Fetch menu API
+* [x] MenuCard redesign (Tailwind premium)
+* [x] Fix image ratio
+* [x] Responsive grid layout
+* [x] Search bar
+* [ ] Category filter
+* [ ] Pagination (optional)
+
+## **3B. Cart System**
+
+* [ ] Zustand cart store
+* [ ] Add to cart button
+* [ ] Update quantity
+* [ ] Remove item
+* [ ] Sync with backend cart endpoints
+* [ ] Display cart count on navbar
+
+## **3C. Checkout & Payment**
+
+* [ ] Checkout page UI
+* [ ] API integration `/checkout`
+* [ ] Load Midtrans Snap script
+* [ ] snap.pay(token) integration
+* [ ] Handle success/pending/error redirect
+* [ ] Save order to backend
+
+## **3D. Order History**
+
+* [ ] GET /customer/order/history
+* [ ] Order detail page
+* [ ] Payment status indicator
+
+---
+
+# 🛠 **PHASE 4 — ADMIN MODULE**
+
+Role: **manage menus, orders, dashboards, users (if allowed)**
+UI dibuat clean & profesional Tailwind Admin template.
+
+## **4A. Dashboard**
+
+* [ ] Total sales
+* [ ] Total customers
+* [ ] Order analytics
+* [ ] Best selling menu
+
+## **4B. Menu Management**
+
+* [ ] CRUD Menu (Create, Read, Update, Delete)
+* [ ] Upload image (Cloudinary or local)
+* [ ] Category management
+
+## **4C. Order Management**
+
+* [ ] List orders (new, processing, done)
+* [ ] Update status (admin overrides karyawan)
+* [ ] Print invoice
+
+## **4D. User Management (Optional)**
+
+* [ ] Create/edit/delete karyawan
+* [ ] Assign roles
+
+---
+
+# 🎽 **PHASE 5 — KARYAWAN MODULE**
+
+Role: mengelola pesanan harian yang masuk.
+
+### **5.1 Order Handling UI**
+
+* [ ] Daftar order masuk (real-time polling or socket)
+* [ ] Update status: accepted → processed → done
+* [ ] Print simple receipt
+
+### **5.2 Restricted Access**
+
+* [ ] Karyawan cannot modify menu
+* [ ] Karyawan cannot manage users
+* [ ] Hanya order management
+
+---
+
+# 👑 **PHASE 6 — SUPERADMIN MODULE**
+
+Role: kontrol penuh sistem.
+
+### **6.1 Manage Admin**
+
+* [ ] Approve admin
+* [ ] Delete admin
+* [ ] Reset credentials
+
+### **6.2 Manage Karyawan**
+
+* [ ] Add/remove karyawan
+* [ ] Assign store branch (if multi-branch)
+
+### **6.3 System Reports**
+
+* [ ] Sales global
+* [ ] Audit trail
+* [ ] Data export (CSV/PDF)
+
+---
+
+# 🎨 **PHASE 7 — UI/UX OPTIMIZATION**
+
+* [ ] Global theme
+* [ ] Animations & transitions
+* [ ] Loading skeletons
+* [ ] Toast notifications
+* [ ] Mobile-first optimization
+* [ ] Better color palette (Green Warteg Digital theme)
+
+---
+
+# 🧪 **PHASE 8 — TESTING**
+
+### **8.1 Frontend Testing**
+
+* [ ] Unit test components
+* [ ] Integration test (auth, cart, checkout)
+
+### **8.2 Backend Testing**
+
+* [ ] API test
+* [ ] Webhook test
+* [ ] Database validation
+
+---
+
+# 🚀 **PHASE 9 — DEPLOYMENT**
+
+### **Frontend**
+
+* [ ] Deploy Vite React App (Vercel / Netlify)
+* [ ] Setup env variables
+
+### **Backend**
+
+* [ ] Deploy Node.js server (Railway / Render / VPS)
+* [ ] Domain
+* [ ] SSL
+* [ ] Midtrans production mode
+
+---
+
+# 📌 **SUMMARY — CHECKLIST PROGRESS**
+
+**Berikut status yang SUDAH kamu selesaikan sejauh ini:**
+
+| Modul               | Status  |
+| ------------------- | ------- |
+| Project Setup       | ✔ Done  |
+| Tailwind migration  | ✔ Done  |
+| Customer Auth       | ✔ Done  |
+| Navbar reactive     | ✔ Done  |
+| Menu page           | ✔ Done  |
+| MenuCard redesign   | ✔ Done  |
+| Search bar          | ✔ Done  |
+| Cart system         | ❌ Belum |
+| Checkout + Midtrans | ❌ Belum |
+| Order history       | ❌ Belum |
+| Admin login         | ❌ Belum |
+| Admin dashboard     | ❌ Belum |
+| Menu CRUD           | ❌ Belum |
+| Karyawan module     | ❌ Belum |
+| Superadmin module   | ❌ Belum |
+
+---
+
+# 🟢 **NEXT STEP (PHASE 3 — Customer Module):**
+
+Saran aku:
+➡ **Mulai PHASE 3B — Cart System (Frontend + Backend)**
+
+Karena:
+
+* Tombol "Tambah" sudah ada
+* Menu sudah tampil
+* User sudah bisa login
+* Cart adalah fitur inti
+
+Kamu tinggal bilang:
+
+### **"Bestie, lanjut Phase 3B (Cart System)"**
+
+atau kalau mau ke module admin/karyawan dulu, tinggal bilang saja.

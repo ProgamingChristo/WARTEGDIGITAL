@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useAuthStore } from "./store/authStore";
+import MainLayout from "./layouts/MainLayout";
 
-function App() {
-  const [count, setCount] = useState(0)
+/* ================= CUSTOMER ================= */
+import MenuPage from "./pages/Customer/MenuPage";
+import LoginCustomer from "./pages/auth/LoginCustomer";
+import RegisterCustomer from "./pages/auth/RegisterCustomer";
+import CartPage from "./pages/Customer/CartPage";
+import CheckoutPage from "./pages/Checkout/CheckoutPage";
+import SuccessPage from "./pages/Checkout/SuccessPage";
+import OrderHistoryPage from "./pages/Order/OrderHistoryPage";
+import OrderDetailPage from "./pages/Customer/OrderDetailPage";
+
+/* ================= ADMIN ================= */
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminMenuPage from "./pages/admin/menu/AdminMenuPage";
+import AdminGuard from "./utils/adminGuard";
+import AdminLayout from "./layouts/AdminLayout";
+
+const App = () => {
+  const { token } = useAuthStore();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <BrowserRouter>
+      <Routes>
 
-export default App
+        {/* ================= CUSTOMER AREA ================= */}
+        <Route element={<MainLayout key={token ?? "guest"} />}>
+          <Route path="/" element={<MenuPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/order/history" element={<OrderHistoryPage />} />
+          <Route path="/order/:orderId" element={<OrderDetailPage />} />
+        </Route>
+
+        {/* ================= CUSTOMER AUTH ================= */}
+        <Route path="/login" element={<LoginCustomer />} />
+        <Route path="/register" element={<RegisterCustomer />} />
+
+        {/* ================= ADMIN AUTH ================= */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* ================= ADMIN AREA ================= */}
+        <Route
+          path="/admin"
+          element={
+            <AdminGuard>
+              <AdminLayout />
+            </AdminGuard>
+          }
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="menu" element={<AdminMenuPage />} />
+          {/* future routes nanti nyusul */}
+        </Route>
+
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+export default App;

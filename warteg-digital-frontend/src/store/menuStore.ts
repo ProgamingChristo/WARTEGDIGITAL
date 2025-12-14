@@ -1,33 +1,28 @@
 import { create } from "zustand";
-import api from "../api/axios";
+import { getMenus } from "../api/menuApi";
+import type { MenuType } from "../utils/types";
 
-interface Menu {
-  _id: string;
-  name: string;
-  price: number;
-}
-
-interface MenuState {
-  menus: Menu[];
+interface MenuStore {
+  menus: MenuType[];
   loading: boolean;
   fetchMenus: () => Promise<void>;
 }
 
-const useMenuStore = create<MenuState>((set) => ({
+export const useMenuStore = create<MenuStore>((set) => ({
   menus: [],
   loading: false,
 
   fetchMenus: async () => {
     set({ loading: true });
     try {
-      const res = await api.get("/customer/menu");
-      set({ menus: res.data.data });
+      const data = await getMenus();
+      // jaga-jaga backend ngirim object / null
+      set({ menus: Array.isArray(data) ? data : [] });
     } catch (err) {
-      console.error("Error fetch menu:", err);
+      console.error("Failed fetch menus:", err);
+      set({ menus: [] });
     } finally {
       set({ loading: false });
     }
   },
 }));
-
-export default useMenuStore;

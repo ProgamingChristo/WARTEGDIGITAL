@@ -176,6 +176,30 @@ export const getOrderHistoryCustomer = async (req, res) => {
     });
   }
 };
+export const getOrderDetailCustomer = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+    const orderId = req.params.id;
+
+    const order = await Order.findOne({
+      _id: orderId,
+      createdBy: customerId
+    }).populate("items.menuId", "name price imageUrl description");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order tidak ditemukan" });
+    }
+
+    res.json(order);
+
+  } catch (err) {
+    res.status(500).json({
+      message: "Gagal mengambil detail order",
+      error: err.message,
+    });
+  }
+};
+
 // ==============================
 // 🔵 UPDATE USERNAME
 // ==============================

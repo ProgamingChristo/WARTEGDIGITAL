@@ -1,39 +1,90 @@
-import { useEffect } from "react";
-import useMenuStore from "../../store/menuStore";
-import useCartStore from "../../store/cartStore";
+import { useMenuStore } from "../../store/menuStore";
+import { useEffect, useState, useMemo } from "react";
+import MenuCard from "../../components/MenuCard";
 
 const MenuPage = () => {
-  const { menus, loading, fetchMenus } = useMenuStore();
-  const { addToCart } = useCartStore();
+  const { menus, fetchMenus } = useMenuStore();
+
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
 
   useEffect(() => {
     fetchMenus();
-  }, []);
+  }, [fetchMenus]);
+
+  // Ambil kategori unik dari data menu
+  const categories = useMemo(() => {
+    const unique = new Set(menus.map((m) => m.category));
+    return ["all", ...Array.from(unique)];
+  }, [menus]);
+
+  // FILTER SEARCH + CATEGORY
+  const filteredMenus = useMemo(() => {
+    return menus.filter((m) => {
+      const matchSearch = m.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchCategory =
+        category === "all" || m.category === category;
+
+      return matchSearch && matchCategory;
+    });
+  }, [menus, search, category]);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-5">Daftar Menu</h1>
+    <div className="max-w-6xl mx-auto px-4 py-6">
 
-      {loading && <p>Loading menu...</p>}
+      {/* TITLE */}
+      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+        Menu Warteg
+      </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {menus.map((menu) => (
-          <div
-            key={menu._id}
-            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
-          >
-            <h2 className="text-lg font-bold">{menu.name}</h2>
-            <p className="text-gray-600">Rp {menu.price.toLocaleString()}</p>
+      {/* SEARCH & FILTER */}
+      <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
 
-            <button
-              onClick={() => addToCart(menu)}
-              className="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            >
-              Tambah ke Keranjang
-            </button>
-          </div>
-        ))}
+        {/* SEARCH */}
+        <input
+          type="text"
+          placeholder="Cari menu..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="
+            w-full sm:w-1/2 px-4 py-2 border rounded-lg shadow-sm 
+            focus:ring-2 focus:ring-green-500 focus:outline-none
+          "
+        />
+
+        {/* FILTER CATEGORY */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="
+            w-full sm:w-48 px-4 py-2 border rounded-lg shadow-sm
+            focus:ring-2 focus:ring-green-500 focus:outline-none
+          "
+        >
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat === "all" ? "Semua Kategori" : cat}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* GRID MENU */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredMenus.length > 0 ? (
+          filteredMenus.map((menu) => (
+            <MenuCard key={menu._id} menu={menu} />
+          ))
+        ) : (
+          <p className="text-center text-gray-500 col-span-full">
+            Menu tidak ditemukan.
+          </p>
+        )}
+      </div>
+
     </div>
   );
 };

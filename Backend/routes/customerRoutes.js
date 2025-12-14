@@ -7,7 +7,8 @@ import {
   getOrderHistoryCustomer,
   updateUsername,
   updatePassword,
-  getAllMenuCustomer
+  getAllMenuCustomer,
+  getOrderDetailCustomer
 } from "../controllers/customerController.js";
 
 import { verifyToken, verifyCustomer } from "../middleware/authMiddleware.js";
@@ -19,6 +20,9 @@ const router = express.Router();
 // =======================
 router.post("/register", registerCustomer);
 router.post("/login", loginCustomer);
+router.post("/logout", (req, res) => {
+  return res.json({ message: "Logout berhasil" });
+});
 
 // =======================
 // 🧾 ORDER CUSTOMER
@@ -26,7 +30,14 @@ router.post("/login", loginCustomer);
 // Customer melihat menu (public)
 router.get("/menu", getAllMenuCustomer);
 router.post("/order", verifyToken, verifyCustomer, createOrderCustomer);
+// Customer History
 router.get("/order/history", verifyToken, verifyCustomer, getOrderHistoryCustomer);
+
+// NEW → Detail Order
+router.get("/order/:id", verifyToken, verifyCustomer, getOrderDetailCustomer);
+
+
+
 
 // =======================
 // 👤 UPDATE PROFILE CUSTOMER
