@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
+
+/* ================= LAYOUT ================= */
 import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 /* ================= CUSTOMER ================= */
 import MenuPage from "./pages/Customer/MenuPage";
@@ -16,8 +19,16 @@ import OrderDetailPage from "./pages/Customer/OrderDetailPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminMenuPage from "./pages/admin/menu/AdminMenuPage";
+import AdminOrderPage from "./pages/admin/order/AdminOrderPage";
+import AdminKaryawanPage from "./components/admin/karyawan/AdminKaryawanPage";
 import AdminGuard from "./utils/adminGuard";
-import AdminLayout from "./layouts/AdminLayout";
+
+/* ================= KARYAWAN (PHASE 6 – FIX) ================= */
+import LoginKaryawan from "./pages/karyawan/LoginKaryawan";
+import KasirOrderPage from "./pages/karyawan/kasir/KasirPage";
+import KitchenOrderPage from "./pages/karyawan/dapur/KitchenPage";
+import KasirGuard from "./utils/kasirGuard";
+import DapurGuard from "./utils/dapurGuard";
 
 const App = () => {
   const { token } = useAuthStore();
@@ -26,7 +37,9 @@ const App = () => {
     <BrowserRouter>
       <Routes>
 
-        {/* ================= CUSTOMER AREA ================= */}
+        {/* =================================================
+            CUSTOMER AREA
+        ================================================= */}
         <Route element={<MainLayout key={token ?? "guest"} />}>
           <Route path="/" element={<MenuPage />} />
           <Route path="/cart" element={<CartPage />} />
@@ -36,14 +49,15 @@ const App = () => {
           <Route path="/order/:orderId" element={<OrderDetailPage />} />
         </Route>
 
-        {/* ================= CUSTOMER AUTH ================= */}
+        {/* CUSTOMER AUTH */}
         <Route path="/login" element={<LoginCustomer />} />
         <Route path="/register" element={<RegisterCustomer />} />
 
-        {/* ================= ADMIN AUTH ================= */}
+        {/* =================================================
+            ADMIN
+        ================================================= */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* ================= ADMIN AREA ================= */}
         <Route
           path="/admin"
           element={
@@ -54,8 +68,34 @@ const App = () => {
         >
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="menu" element={<AdminMenuPage />} />
-          {/* future routes nanti nyusul */}
+          <Route path="karyawan" element={<AdminKaryawanPage />} />
+          <Route path="order" element={<AdminOrderPage />} />
         </Route>
+
+        {/* =================================================
+            KARYAWAN (PHASE 6 – FINAL)
+        ================================================= */}
+        <Route path="/karyawan/login" element={<LoginKaryawan />} />
+
+        {/* Kasir hanya bisa akses halaman kasir */}
+        <Route
+          path="/karyawan/kasir"
+          element={
+            <KasirGuard>
+              <KasirOrderPage />
+            </KasirGuard>
+          }
+        />
+
+        {/* Dapur hanya bisa akses halaman dapur */}
+        <Route
+          path="/karyawan/kitchen"
+          element={
+            <DapurGuard>
+              <KitchenOrderPage />
+            </DapurGuard>
+          }
+        />
 
       </Routes>
     </BrowserRouter>

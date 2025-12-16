@@ -1,3 +1,4 @@
+
 // ==========================
 // MENU TYPE
 // ==========================
@@ -8,10 +9,7 @@ export interface MenuType {
   imageUrl?: string;
   description?: string;
   category?: string;
-  // jika backend nanti menambah kategori, tinggal aktifkan:
-  // category?: string;
 }
-
 
 // ==========================
 // CART TYPE
@@ -21,14 +19,13 @@ export interface CartItemType {
   qty: number;
 }
 
-
 // ==========================
-// ORDER TYPE
+// ORDER TYPE (customer)
 // ==========================
 export interface OrderType {
   _id: string;
   items: {
-    menuId: MenuType;   // menu detail ikut tampil
+    menuId: MenuType;   // populate
     qty: number;
   }[];
   totalPrice: number;
@@ -36,9 +33,8 @@ export interface OrderType {
   createdAt: string;
 }
 
-
 // ==========================
-// AUTH USER TYPE → mengikuti backend customer/admin
+// AUTH USER TYPE
 // ==========================
 export interface UserType {
   _id?: string;
@@ -48,6 +44,10 @@ export interface UserType {
   address?: string;
   role: "customer" | "admin" | "karyawan" | "superadmin";
 }
+
+// ==========================
+// ORDER DETAIL (customer)
+// ==========================
 export interface OrderItem {
   menuId: {
     _id: string;
@@ -67,4 +67,28 @@ export interface OrderDetail {
   paymentStatus: string;
   createdAt: string;
   invoicePath?: string;
+}
+
+// ==========================
+// ADMIN ORDER TYPES
+// ==========================
+export interface AdminOrderItemDetail {
+  _id: string;          // tambahan agar key-map aman
+  menuId: {
+    name: string;
+    price: number;
+    imageUrl?: string;
+  };
+  qty: number;
+}
+
+export interface AdminOrderDetail {
+  _id: string;
+  customerName: string;
+  items: AdminOrderItemDetail[];
+  totalPrice: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  createdAt: string;
 }

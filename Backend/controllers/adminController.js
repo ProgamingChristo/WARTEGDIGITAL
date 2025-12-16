@@ -304,3 +304,28 @@ export const deleteOrder = async (req, res) => {
     res.status(500).json({ message: "Gagal menghapus order", error: error.message });
   }
 };
+export const getAdminOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("items.menuId", "name price imageUrl") // populate nama, harga, gambar
+      .lean(); // hasil plain object (cepat)
+
+    if (!order) {
+      return res.status(404).json({ message: "Order tidak ditemukan" });
+    }
+
+    // opsional: hitung ulang totalPrice agar 100% akurat
+    const totalPrice = order.items.reduce(
+      (sum, it) => sum + it.qty * (it.menuId?.price || 0),
+      0
+    );
+
+    return res.json({
+      success: true,
+      data: { ...order, totalPrice }, // kirim yang sudah populate
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Terjadi kesalahan server" });
+  }
+};

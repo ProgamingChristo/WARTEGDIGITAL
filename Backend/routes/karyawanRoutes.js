@@ -5,6 +5,7 @@ import {
   getAllKaryawan,
   absenMasuk,
   kasirConfirmPayment,
+  getAllOrders,
   getOrdersForKitchen,
   updateCookingStatus
 } from "../controllers/karyawanController.js";
@@ -32,6 +33,7 @@ router.post("/absen", verifyToken, verifyKaryawan, absenMasuk);
 // ✅ Kasir — Konfirmasi Pembayaran
 // =========================
 router.put("/order/:id/pay", verifyToken, verifyKasir, kasirConfirmPayment);
+router.get("/orders", verifyToken, verifyKaryawan, getAllOrders);
 
 // =========================
 // ✅ Dapur — Ambil order yang harus dimasak

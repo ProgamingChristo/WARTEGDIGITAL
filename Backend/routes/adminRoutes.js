@@ -14,6 +14,7 @@ import {
   getAllOrders,
   updateOrder,
   deleteOrder,
+  getAdminOrderById,
   getAllAbsensi, // ✅ Pindahkan ke sini biar semua controller di satu tempat
 } from "../controllers/adminController.js";
 
@@ -52,6 +53,7 @@ router.get("/absensi", verifyToken, verifyAdmin, getAllAbsensi);
 // 📦 ORDER MANAGEMENT
 // ==========================
 router.post("/order", verifyToken, verifyAdmin, createOrder);
+router.get("/order/:id", verifyToken, verifyAdmin, getAdminOrderById); // <-- baru
 router.get("/order", verifyToken, verifyAdmin, getAllOrders);
 router.put("/order/:id", verifyToken, verifyAdmin, updateOrder);
 router.delete("/order/:id", verifyToken, verifyAdmin, deleteOrder);

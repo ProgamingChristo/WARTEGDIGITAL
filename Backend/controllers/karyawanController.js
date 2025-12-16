@@ -170,6 +170,10 @@ export const getAllAbsensi = async (req, res) => {
 // ========================
 // 💵 Kasir — Konfirmasi Pembayaran
 // ========================
+
+
+
+
 export const kasirConfirmPayment = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -199,8 +203,30 @@ export const kasirConfirmPayment = async (req, res) => {
     });
   }
 };
+// ========================
+//  Kasir — get all orders
+// ========================
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .populate("items.menuId", "name price imageUrl")
+      .sort({ createdAt: -1 })
+      .lean();
 
+    const data = orders.map((o) => {
+      const totalPrice = o.items.reduce(
+        (sum, it) => sum + it.qty * (it.menuId?.price || 0),
+        0
+      );
+      return { ...o, totalPrice };
+    });
 
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Terjadi kesalahan server" });
+  }
+};
 // ========================
 // 🍳 Dapur — Ambil Order Masak
 // ========================
