@@ -5,7 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import strict from "assert/strict";
 // Import routes
 import superAdminRoutes from "../routes/superAdminRoutes.js";
 import adminRoutes from "../routes/adminRoutes.js";

@@ -4,6 +4,7 @@ import { useAuthStore } from "./store/authStore";
 /* ================= LAYOUT ================= */
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import SuperAdminLayout from "./layouts/SuperAdminLayout";
 
 /* ================= CUSTOMER ================= */
 import MenuPage from "./pages/Customer/MenuPage";
@@ -23,12 +24,18 @@ import AdminOrderPage from "./pages/admin/order/AdminOrderPage";
 import AdminKaryawanPage from "./components/admin/karyawan/AdminKaryawanPage";
 import AdminGuard from "./utils/adminGuard";
 
-/* ================= KARYAWAN (PHASE 6 – FIX) ================= */
+/* ================= KARYAWAN (PHASE 6 – FINAL) ================= */
 import LoginKaryawan from "./pages/karyawan/LoginKaryawan";
 import KasirOrderPage from "./pages/karyawan/kasir/KasirPage";
 import KitchenOrderPage from "./pages/karyawan/dapur/KitchenPage";
 import KasirGuard from "./utils/kasirGuard";
 import DapurGuard from "./utils/dapurGuard";
+
+/* ================= SUPERADMIN (PHASE 8) ================= */
+import LoginSuperadmin from "./pages/superadmin/LoginSuperadmin";
+import DashboardSuperadmin from "./pages/superadmin/DashboardSuperadmin";
+import SuperAdminAdminPage from "./pages/superadmin/admin/SuperAdminAdminPage";
+import SuperadminGuard from "./utils/superadminGuard";
 
 const App = () => {
   const { token } = useAuthStore();
@@ -77,7 +84,7 @@ const App = () => {
         ================================================= */}
         <Route path="/karyawan/login" element={<LoginKaryawan />} />
 
-        {/* Kasir hanya bisa akses halaman kasir */}
+        {/* Kasir */}
         <Route
           path="/karyawan/kasir"
           element={
@@ -87,7 +94,7 @@ const App = () => {
           }
         />
 
-        {/* Dapur hanya bisa akses halaman dapur */}
+        {/* Dapur */}
         <Route
           path="/karyawan/kitchen"
           element={
@@ -96,6 +103,23 @@ const App = () => {
             </DapurGuard>
           }
         />
+
+        {/* =================================================
+            SUPERADMIN (PHASE 8 – ISOLATED)
+        ================================================= */}
+        <Route path="/superadmin/login" element={<LoginSuperadmin />} />
+
+        <Route
+          path="/superadmin"
+          element={
+            <SuperadminGuard>
+              <SuperAdminLayout />
+            </SuperadminGuard>
+          }
+        >
+          <Route path="dashboard" element={<DashboardSuperadmin />} />
+          <Route path="admin" element={<SuperAdminAdminPage />} />
+        </Route>
 
       </Routes>
     </BrowserRouter>
