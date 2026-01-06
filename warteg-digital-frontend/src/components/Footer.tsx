@@ -1,8 +1,7 @@
-import React from 'react';
 
 const Footer = () => {
   // Handler untuk submit form
-  const handleSaranSubmit = (e) => {
+const handleSaranSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     alert('Terima kasih! Saran Anda sudah masuk ke dapur kami.');
   };
@@ -122,7 +121,7 @@ const Footer = () => {
                 </div>
                 <div className="relative">
                   <textarea
-                    rows="2"
+                    rows={2}
                     placeholder="Tulis curhatan rasa..."
                     className="w-full bg-gray-50 text-gray-800 text-sm px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0F8A5F] focus:ring-1 focus:ring-[#0F8A5F] transition-all placeholder-gray-400 resize-none"
                     required

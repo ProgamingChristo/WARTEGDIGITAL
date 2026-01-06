@@ -14,7 +14,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/backend/src/main.ts" },
+    { "source": "/api/(.*)", "destination": "/Backend/src/server.js" },
     { "source": "/(.*)", "destination": "/warteg-digital-frontend/index.html" }
   ],
   "headers": [
