@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface KaryawanFormData {
   name: string;
@@ -12,7 +11,7 @@ export interface KaryawanFormData {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: KaryawanFormData) => void;
+  onSubmit: (data: KaryawanFormData) => void | Promise<void>;
   initialData?: {
     name: string;
     username: string;
@@ -21,117 +20,129 @@ interface Props {
   } | null;
 }
 
+const defaultForm: KaryawanFormData = {
+  name: "",
+  username: "",
+  password: "",
+  position: "kasir",
+  shift: "pagi",
+};
 
 const KaryawanFormModal = ({ open, onClose, onSubmit, initialData }: Props) => {
-  /* inisialisasi state langsung dari props – tidak pakai effect */
-  const [form, setForm] = useState<KaryawanFormData>(() => ({
-    name: initialData?.name ?? "",
-    username: initialData?.username ?? "",
-    password: "", // selalu kosong saat mount
-    position: initialData?.position ?? "kasir",
-    shift: initialData?.shift ?? "pagi",
-  }));
+  const [form, setForm] = useState<KaryawanFormData>(defaultForm);
+  const isEditing = useMemo(() => Boolean(initialData), [initialData]);
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({
+      ...defaultForm,
+      ...initialData,
+      password: "",
+    });
+  }, [open, initialData]);
 
   if (!open) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const payload: KaryawanFormData = form.password
-      ? form
-      : { name: form.name, username: form.username, position: form.position, shift: form.shift };
-    onSubmit(payload);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const payload: KaryawanFormData = {
+      name: form.name.trim(),
+      username: form.username.trim(),
+      position: form.position,
+      shift: form.shift,
+      ...(form.password?.trim() ? { password: form.password.trim() } : {}),
+    };
+
+    await onSubmit(payload);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
-            {initialData ? "Edit Karyawan" : "Tambah Karyawan"}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <span className="sr-only">Tutup</span>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(18,22,28,0.45)] p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-[#dbe2ec] bg-white p-6 shadow-[0_30px_80px_rgba(17,24,39,0.3)]">
+        <h2 className="font-display text-3xl text-[#13243a]">{isEditing ? "Edit Karyawan" : "Tambah Karyawan"}</h2>
+        <p className="mt-1 text-sm text-[#5f6776]">Atur akun login, posisi, dan shift kerja karyawan.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+        <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6776]">Nama</span>
             <input
-              required
-              placeholder="Nama lengkap"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-            <input
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
               required
-              placeholder="Username untuk login"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              className="w-full rounded-xl border border-[#d5dce7] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+              placeholder="Nama lengkap"
             />
-          </div>
+          </label>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password {initialData && <span className="text-gray-400">(kosongkan jika tidak diganti)</span>}
-            </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6776]">Username</span>
+            <input
+              value={form.username}
+              onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+              required
+              className="w-full rounded-xl border border-[#d5dce7] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+              placeholder="Username login"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6776]">
+              Password {isEditing ? "(opsional)" : ""}
+            </span>
             <input
               type="password"
-              placeholder={initialData ? "Kosongkan jika tidak diganti" : "Minimal 6 karakter"}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+              required={!isEditing}
+              className="w-full rounded-xl border border-[#d5dce7] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+              placeholder={isEditing ? "Kosongkan jika tidak diganti" : "Minimal 6 karakter"}
             />
-          </div>
+          </label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Posisi</label>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6776]">Posisi</span>
               <select
-                className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                 value={form.position}
-                onChange={(e) => setForm({ ...form, position: e.target.value as "kasir" | "dapur" })}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, position: e.target.value as "kasir" | "dapur" }))
+                }
+                className="w-full rounded-xl border border-[#d5dce7] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
               >
                 <option value="kasir">Kasir</option>
                 <option value="dapur">Dapur</option>
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#5f6776]">Shift</span>
               <select
-                className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                 value={form.shift}
-                onChange={(e) => setForm({ ...form, shift: e.target.value as "pagi" | "siang" | "malam" })}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, shift: e.target.value as "pagi" | "siang" | "malam" }))
+                }
+                className="w-full rounded-xl border border-[#d5dce7] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
               >
                 <option value="pagi">Pagi</option>
                 <option value="siang">Siang</option>
                 <option value="malam">Malam</option>
               </select>
-            </div>
+            </label>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition"
+              className="rounded-xl border border-[#cfd5df] px-4 py-2 text-sm font-semibold text-[#344256] transition hover:bg-[#f4f7fb]"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition"
+              className="rounded-xl bg-[#136f63] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0f5d53]"
             >
               Simpan
             </button>

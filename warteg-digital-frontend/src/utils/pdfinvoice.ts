@@ -14,10 +14,10 @@ export const exportInvoicePDF = (order: AdminOrderDetail) => {
     startY: 35,
     head: [["Menu", "Qty", "Harga", "Subtotal"]],
     body: order.items.map((i) => [
-      i.menuId.name,
+      i.menuId?.name || "Menu tidak tersedia",
       i.qty,
-      formatRupiah(i.menuId.price),
-      formatRupiah(i.qty * i.menuId.price),
+      formatRupiah(i.menuId?.price || 0),
+      formatRupiah(i.qty * (i.menuId?.price || 0)),
     ]),
   });
 

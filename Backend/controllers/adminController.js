@@ -6,6 +6,39 @@ import Karyawan from "../models/Karyawan.js";
 import Order from "../models/Orders.js";
 import { body, validationResult } from "express-validator"; // Input validation steps
 
+const sanitizeText = (value, max = 120) =>
+  typeof value === "string" ? value.trim().slice(0, max) : "";
+
+const sanitizeProfileImage = (value) => {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.length > 4_500_000) return null;
+
+  const dataUrlPattern = /^data:image\/(png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i;
+  if (dataUrlPattern.test(trimmed)) return trimmed;
+
+  try {
+    const parsedUrl = new URL(trimmed);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") return trimmed;
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const toAdminPayload = (admin) => ({
+  id: admin._id,
+  username: admin.username,
+  fullName: admin.fullName || "",
+  email: admin.email || "",
+  phone: admin.phone || "",
+  profileImage: admin.profileImage || "",
+  role: "admin",
+});
+
 // ======================
 // 🔐 AUTH ADMIN
 // ======================
@@ -64,7 +97,7 @@ export const loginAdmin = async (req, res) => {
     res.json({
       message: "Login berhasil",
       token,
-      data: { id: admin._id, username: admin.username, role: "admin" },
+      data: toAdminPayload(admin),
     });
   } catch (error) {
     console.error(error); // Log error for debugging
@@ -78,16 +111,26 @@ export const loginAdmin = async (req, res) => {
 export const createMenu = async (req, res) => {
   await body('name').notEmpty().withMessage('Nama wajib diisi').run(req);
   await body('price').isNumeric().withMessage('Harga harus berupa angka').run(req);
+  await body('stock').isInt({ min: 0 }).withMessage('Stock harus berupa angka >= 0').run(req);
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, category, price, description, imageUrl } = req.body;
+  const { name, category, price, stock, description, imageUrl } = req.body;
 
   try {
-    const newMenu = new Menu({ name, category, price, description, imageUrl });
+    const normalizedStock = Number(stock ?? 0);
+    const newMenu = new Menu({
+      name: sanitizeText(name, 120),
+      category,
+      price: Number(price),
+      stock: normalizedStock,
+      description: sanitizeText(description, 500),
+      imageUrl: sanitizeText(imageUrl, 2000),
+      available: normalizedStock > 0,
+    });
     await newMenu.save();
 
     res.status(201).json({ message: "Menu berhasil ditambahkan", data: newMenu });
@@ -99,8 +142,13 @@ export const createMenu = async (req, res) => {
 
 export const getAllMenu = async (req, res) => {
   try {
-    const menu = await Menu.find();
-    res.json({ message: "Data menu berhasil diambil", data: menu });
+    const menu = await Menu.find().sort({ updatedAt: -1, name: 1 });
+    const normalized = menu.map((item) => ({
+      ...item.toObject(),
+      stock: Number(item.stock ?? 0),
+      available: Number(item.stock ?? 0) > 0 ? item.available : false,
+    }));
+    res.json({ message: "Data menu berhasil diambil", data: normalized });
   } catch (error) {
     console.error(error); // Log error for debugging
     res.status(500).json({ message: "Gagal mengambil data menu", error: error.message });
@@ -108,13 +156,16 @@ export const getAllMenu = async (req, res) => {
 };
 
 export const updateMenu = async (req, res) => {
-  const { name, price } = req.body;
+  const { name, price, stock } = req.body;
 
   if (name) {
     await body('name').notEmpty().withMessage('Nama wajib diisi').run(req);
   }
   if (price) {
     await body('price').isNumeric().withMessage('Harga harus berupa angka').run(req);
+  }
+  if (stock !== undefined) {
+    await body('stock').isInt({ min: 0 }).withMessage('Stock harus berupa angka >= 0').run(req);
   }
 
   const errors = validationResult(req);
@@ -123,7 +174,36 @@ export const updateMenu = async (req, res) => {
   }
 
   try {
-    const updated = await Menu.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const existing = await Menu.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Menu tidak ditemukan" });
+
+    const nextStock =
+      stock !== undefined ? Number(stock) : Number(existing.stock ?? 0);
+
+    const payload = {
+      ...req.body,
+      ...(name !== undefined ? { name: sanitizeText(name, 120) } : {}),
+      ...(price !== undefined ? { price: Number(price) } : {}),
+      ...(stock !== undefined ? { stock: nextStock } : {}),
+      ...(req.body.description !== undefined
+        ? { description: sanitizeText(req.body.description, 500) }
+        : {}),
+      ...(req.body.imageUrl !== undefined
+        ? { imageUrl: sanitizeText(req.body.imageUrl, 2000) }
+        : {}),
+    };
+
+    if (nextStock <= 0) {
+      payload.available = false;
+    } else if (
+      stock !== undefined &&
+      Number(existing.stock ?? 0) <= 0 &&
+      req.body.available === undefined
+    ) {
+      payload.available = true;
+    }
+
+    const updated = await Menu.findByIdAndUpdate(req.params.id, payload, { new: true });
 
     if (!updated) return res.status(404).json({ message: "Menu tidak ditemukan" });
 
@@ -327,5 +407,75 @@ export const getAdminOrderById = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Terjadi kesalahan server" });
+  }
+};
+
+// ======================
+// 👤 ADMIN PROFILE
+// ======================
+export const getAdminProfile = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.user.id).select("-password");
+    if (!admin) return res.status(404).json({ message: "Admin tidak ditemukan" });
+
+    res.json({
+      message: "Profil admin berhasil diambil",
+      data: toAdminPayload(admin),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal mengambil profil admin", error: error.message });
+  }
+};
+
+export const updateAdminProfile = async (req, res) => {
+  try {
+    if (req.body.password !== undefined) {
+      return res.status(400).json({ message: "Password tidak dapat diubah dari halaman profil admin." });
+    }
+
+    const admin = await Admin.findById(req.user.id);
+    if (!admin) return res.status(404).json({ message: "Admin tidak ditemukan" });
+
+    const { username, fullName, email, phone, profileImage } = req.body;
+
+    if (username !== undefined) {
+      const normalizedUsername = sanitizeText(username, 60);
+      if (!normalizedUsername) {
+        return res.status(400).json({ message: "Username tidak boleh kosong." });
+      }
+
+      const existing = await Admin.findOne({
+        username: normalizedUsername,
+        _id: { $ne: admin._id },
+      });
+      if (existing) {
+        return res.status(400).json({ message: "Username sudah digunakan admin lain." });
+      }
+
+      admin.username = normalizedUsername;
+    }
+
+    if (fullName !== undefined) admin.fullName = sanitizeText(fullName, 120);
+    if (email !== undefined) admin.email = sanitizeText(email, 160);
+    if (phone !== undefined) admin.phone = sanitizeText(phone, 40);
+
+    if (profileImage !== undefined) {
+      const normalizedImage = sanitizeProfileImage(profileImage);
+      if (normalizedImage === null) {
+        return res.status(400).json({
+          message: "Format foto profil tidak valid. Gunakan URL http/https atau data gambar.",
+        });
+      }
+      admin.profileImage = normalizedImage;
+    }
+
+    await admin.save();
+
+    res.json({
+      message: "Profil admin berhasil diperbarui",
+      data: toAdminPayload(admin),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal memperbarui profil admin", error: error.message });
   }
 };

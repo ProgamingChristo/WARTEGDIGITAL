@@ -1,10 +1,7 @@
-
-/* OrderDetailModal.tsx */
-import { useEffect, useState } from "react";
-import { X, Printer, Download, DollarSign, Package, Clock, CheckCircle, XCircle } from "lucide-react";
-import { exportInvoicePDF } from "../../../utils/pdfinvoice";
+import { Download, Printer, X } from "lucide-react";
 import { exportOrdersExcel } from "../../../utils/exportExcel";
-import type { AdminOrderDetail, AdminOrderItemDetail } from "../../../utils/types"; // <-- 1 sumber
+import { exportInvoicePDF } from "../../../utils/pdfinvoice";
+import type { AdminOrderDetail } from "./AdminOrderPage";
 
 interface Props {
   order: AdminOrderDetail | null;
@@ -12,120 +9,101 @@ interface Props {
 }
 
 const OrderDetailModal = ({ order, onClose }: Props) => {
-  const [items, setItems] = useState<AdminOrderItemDetail[]>([]);
-
-  useEffect(() => {
-    if (!order) return;
-    fetch(`/api/admin/order/${order._id}`)
-      .then((r) => r.json())
-      .then((d) => setItems(d.data.items || []));
-  }, [order]);
-
   if (!order) return null;
 
-  const handlePrint = () => exportInvoicePDF(order);
-  const handleExportExcel = () => exportOrdersExcel([order]);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-800">Detail Order</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Info row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3">
-              <Package className="w-5 h-5 text-indigo-600" />
-              <div>
-                <p className="text-sm text-slate-500">Customer</p>
-                <p className="font-semibold">{order.customerName}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-5 h-5 text-emerald-600" />
-              <div>
-                <p className="text-sm text-slate-500">Total</p>
-                <p className="font-bold text-emerald-600">Rp {order.totalPrice.toLocaleString("id-ID")}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-slate-500" />
-              <div>
-                <p className="text-sm text-slate-500">Dibuat</p>
-                <p className="font-semibold">{new Date(order.createdAt).toLocaleString("id-ID")}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {order.paymentStatus === "paid" ? (
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              ) : (
-                <XCircle className="w-5 h-5 text-rose-600" />
-              )}
-              <div>
-                <p className="text-sm text-slate-500">Payment</p>
-                <p className="font-semibold">
-                  {order.paymentMethod} ·{" "}
-                  <span className={order.paymentStatus === "paid" ? "text-emerald-600" : "text-rose-600"}>
-                    {order.paymentStatus}
-                  </span>
-                </p>
-              </div>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,18,24,0.45)] p-4">
+      <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#d8e0eb] bg-white shadow-[0_30px_80px_rgba(17,24,39,0.3)]">
+        <header className="flex items-center justify-between border-b border-[#e5ebf4] px-5 py-4">
+          <div>
+            <h2 className="font-display text-2xl text-[#13243a]">Detail Order</h2>
+            <p className="text-xs text-[#617083]">{order._id}</p>
           </div>
+          <button
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d7dfeb] text-[#576579] transition hover:bg-[#f2f6fc]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
 
-          {/* Items table */}
-          <div className="overflow-auto border border-slate-200 rounded-lg">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          <section className="grid gap-3 rounded-xl border border-[#dfe6f1] bg-[#f8fbff] p-4 md:grid-cols-2">
+            <p className="text-sm text-[#314357]">
+              <span className="font-semibold text-[#14253a]">Customer:</span> {order.customerName}
+            </p>
+            <p className="text-sm text-[#314357]">
+              <span className="font-semibold text-[#14253a]">Tanggal:</span> {new Date(order.createdAt).toLocaleString("id-ID")}
+            </p>
+            <p className="text-sm text-[#314357]">
+              <span className="font-semibold text-[#14253a]">Metode:</span> {order.paymentMethod}
+            </p>
+            <p className="text-sm text-[#314357]">
+              <span className="font-semibold text-[#14253a]">Payment:</span> {order.paymentStatus}
+            </p>
+            <p className="text-sm text-[#314357] md:col-span-2">
+              <span className="font-semibold text-[#14253a]">Status Order:</span> {order.status}
+            </p>
+          </section>
+
+          {!!order.foodNote?.trim() && (
+            <section className="rounded-xl border border-[#eeddbf] bg-[#fff7e6] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#946d31]">Catatan Makanan</p>
+              <p className="mt-1 text-sm text-[#8a612a]">{order.foodNote.trim()}</p>
+            </section>
+          )}
+
+          <section className="overflow-hidden rounded-xl border border-[#dbe3ee]">
+            <table className="min-w-full">
+              <thead className="bg-[#f3f7fd]">
                 <tr>
-                  <th className="p-3 text-left">Menu</th>
-                  <th className="p-3 text-left">Qty</th>
-                  <th className="p-3 text-left">Harga</th>
-                  <th className="p-3 text-left">Subtotal</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Menu</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Qty</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Harga</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((it) => {
-                  const menu = it.menuId;
-                  if (!menu) return null;
+                {order.items.map((item) => {
+                  const menuName = item.menuId?.name || "Menu tidak tersedia";
+                  const price = Number(item.menuId?.price || 0);
                   return (
-                    <tr key={it._id} className="border-t border-slate-100">
-                      <td className="p-3">{menu.name}</td>
-                      <td className="p-3">{it.qty}</td>
-                      <td className="p-3">Rp {menu.price.toLocaleString("id-ID")}</td>
-                      <td className="p-3 font-semibold">
-                        Rp {(it.qty * menu.price).toLocaleString("id-ID")}
+                    <tr key={item._id} className="border-t border-[#edf1f7]">
+                      <td className="px-3 py-2 text-sm text-[#26384f]">{menuName}</td>
+                      <td className="px-3 py-2 text-sm text-[#26384f]">{item.qty}</td>
+                      <td className="px-3 py-2 text-sm text-[#26384f]">Rp {price.toLocaleString("id-ID")}</td>
+                      <td className="px-3 py-2 text-sm font-semibold text-[#136f63]">
+                        Rp {(price * Number(item.qty || 0)).toLocaleString("id-ID")}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </section>
+
+          <div className="rounded-xl border border-[#dbe4f0] bg-[#f8fbff] px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#5a6f8f]">Total Bayar</p>
+            <p className="text-xl font-bold text-[#136f63]">Rp {Number(order.totalPrice || 0).toLocaleString("id-ID")}</p>
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="flex items-center justify-end gap-3 p-5 border-t border-slate-200">
+        <footer className="flex items-center justify-end gap-2 border-t border-[#e5ebf4] px-5 py-4">
           <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            onClick={() => exportInvoicePDF(order)}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#cfd9eb] bg-white px-3 py-2 text-sm font-semibold text-[#234067] transition hover:bg-[#eff5ff]"
           >
-            <Printer className="w-4 h-4" /> PDF
+            <Printer className="h-4 w-4" />
+            PDF
           </button>
           <button
-            onClick={handleExportExcel}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+            onClick={() => exportOrdersExcel([order])}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#136f63] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0f5d53]"
           >
-            <Download className="w-4 h-4" /> Excel
+            <Download className="h-4 w-4" />
+            Excel
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

@@ -1,48 +1,41 @@
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../api/axios";
 import KaryawanFormModal from "./KaryawanFormModal";
-import type { Karyawan } from "../.././../utils/Karyawan"
-import { Plus, Search, Filter, Edit, Trash2, Users, CheckCircle, XCircle, X } from "lucide-react";
+import type { Karyawan } from "../../../utils/Karyawan";
+import { Edit3, Plus, Search, Trash2 } from "lucide-react";
 
 type Position = "all" | "kasir" | "dapur";
 
-type Alert = { msg: string; type: "success" | "error" } | null;
-
 const AdminKaryawanPage = () => {
-  const [alert, setAlert] = useState<Alert>(null);
-  const showAlert = (msg: string, type: "success" | "error") => {
-    setAlert({ msg, type });
-    setTimeout(() => setAlert(null), 4000);
-  };
-
   const [data, setData] = useState<Karyawan[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Karyawan | null>(null);
   const [search, setSearch] = useState("");
   const [position, setPosition] = useState<Position>("all");
 
-  /* initial data – ambil sekali saat mount */
-  useState(() => {
-    (async () => {
-      try {
-        const res = await api.get("/admin/karyawan");
-        setData(res.data.data);
-      } catch {
-        showAlert("Gagal mengambil data karyawan", "error");
-      }
-    })();
-  });
+  const fetchKaryawan = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/admin/karyawan");
+      setData(Array.isArray(res.data?.data) ? res.data.data : []);
+    } catch {
+      alert("Gagal mengambil data karyawan.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  /* ---------- CRUD ---------- */
+  useEffect(() => {
+    fetchKaryawan();
+  }, []);
+
   const handleCreate = async (form: Omit<Karyawan, "_id" | "role" | "attendance" | "createdAt">) => {
     try {
       await api.post("/admin/karyawan", form);
-      const res = await api.get("/admin/karyawan");
-      setData(res.data.data);
-      showAlert("Karyawan berhasil ditambahkan", "success");
-    } catch {
-      showAlert("Gagal menambahkan karyawan", "error");
+      await fetchKaryawan();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Gagal menambahkan karyawan.");
     }
   };
 
@@ -50,12 +43,10 @@ const AdminKaryawanPage = () => {
     if (!editing) return;
     try {
       await api.put(`/admin/karyawan/${editing._id}`, form);
-      const res = await api.get("/admin/karyawan");
-      setData(res.data.data);
       setEditing(null);
-      showAlert("Karyawan berhasil diperbarui", "success");
-    } catch {
-      showAlert("Gagal memperbarui karyawan", "error");
+      await fetchKaryawan();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Gagal memperbarui karyawan.");
     }
   };
 
@@ -63,198 +54,154 @@ const AdminKaryawanPage = () => {
     if (!confirm("Yakin ingin menghapus karyawan ini?")) return;
     try {
       await api.delete(`/admin/karyawan/${id}`);
-      const res = await api.get("/admin/karyawan");
-      setData(res.data.data);
-      showAlert("Karyawan berhasil dihapus", "success");
+      await fetchKaryawan();
     } catch {
-      showAlert("Gagal menghapus karyawan", "error");
+      alert("Gagal menghapus karyawan.");
     }
   };
 
-  /* filter */
-  const filtered = data.filter((k) => {
-    const matchName = k.name.toLowerCase().includes(search.toLowerCase());
-    const matchPos = position === "all" || k.position === position;
-    return matchName && matchPos;
-  });
+  const filtered = useMemo(
+    () =>
+      data.filter((item) => {
+        const byName = item.name.toLowerCase().includes(search.toLowerCase());
+        const byPosition = position === "all" || item.position === position;
+        return byName && byPosition;
+      }),
+    [data, position, search]
+  );
+
+  const countKasir = data.filter((item) => item.position === "kasir").length;
+  const countDapur = data.filter((item) => item.position === "dapur").length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 p-4 lg:p-6">
-      {/* alert inline modern */}
-      {alert && (
-        <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-4 p-4 rounded-2xl shadow-2xl border max-w-sm animate-slide-in-right ${
-            alert.type === "success"
-              ? "bg-green-50 border-green-200 text-green-800"
-              : "bg-red-50 border-red-200 text-red-800"
-          }`}
-        >
-          {alert.type === "success" ? (
-            <CheckCircle className="w-6 h-6 text-green-500" />
-          ) : (
-            <XCircle className="w-6 h-6 text-red-500" />
-          )}
-          <p className="flex-1 text-sm font-semibold">{alert.msg}</p>
-          <button onClick={() => setAlert(null)} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
+    <div className="space-y-5">
+      <section className="rounded-3xl border border-[#dae1ea] bg-white p-5 shadow-[0_18px_44px_rgba(19,28,38,0.08)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="font-display text-3xl text-[#13243a]">Kelola Karyawan</h1>
+            <p className="text-sm text-[#5f6776]">Atur akun kasir dan dapur, termasuk shift kerja harian.</p>
+          </div>
+          <button
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#136f63] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f5d53]"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Karyawan
           </button>
         </div>
-      )}
 
-      <div className="max-w-7xl mx-auto">
-        {/* header modern */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-white rounded-2xl shadow-md border">
-              <Users className="w-8 h-8 text-green-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">Kelola Karyawan</h1>
-              <p className="text-gray-500 mt-1">Atur data karyawan warung Anda dengan cepat</p>
-            </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-[#dbe2eb] bg-[#f8fbff] p-3">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#637791]">Total</p>
+            <p className="text-xl font-bold text-[#1c2f48]">{data.length}</p>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* search */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                placeholder="Cari nama karyawan..."
-                className="pl-11 pr-4 py-3 border border-gray-200 rounded-2xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none w-full sm:w-72 shadow-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            {/* filter */}
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select
-                className="pl-11 pr-10 py-3 border border-gray-200 rounded-2xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none appearance-none w-full sm:w-56 shadow-sm"
-                value={position}
-                onChange={(e) => setPosition(e.target.value as Position)}
-              >
-                <option value="all">Semua Posisi</option>
-                <option value="kasir">Kasir</option>
-                <option value="dapur">Dapur</option>
-              </select>
-            </div>
-
-            {/* tambah */}
-            <button
-              onClick={() => {
-                setEditing(null);
-                setOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-5 py-3 rounded-2xl font-semibold shadow-lg transition-all hover:shadow-xl"
-            >
-              <Plus className="w-5 h-5" />
-              Tambah Karyawan
-            </button>
+          <div className="rounded-xl border border-[#dbe2eb] bg-[#f8fbff] p-3">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#637791]">Kasir</p>
+            <p className="text-xl font-bold text-[#1c2f48]">{countKasir}</p>
+          </div>
+          <div className="rounded-xl border border-[#dbe2eb] bg-[#f8fbff] p-3">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#637791]">Dapur</p>
+            <p className="text-xl font-bold text-[#1c2f48]">{countDapur}</p>
+          </div>
+          <div className="rounded-xl border border-[#dbe2eb] bg-[#f8fbff] p-3">
+            <p className="text-xs uppercase tracking-[0.08em] text-[#637791]">Absensi Hari Ini</p>
+            <p className="text-xl font-bold text-[#1c2f48]">
+              {
+                data.filter((karyawan) =>
+                  (karyawan.attendance || []).some((entry) => entry.status === "hadir")
+                ).length
+              }
+            </p>
           </div>
         </div>
 
-        {/* stats card modern */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-          <div className="bg-white p-5 rounded-2xl shadow-md border flex items-center gap-5 hover:shadow-lg transition">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Karyawan</p>
-              <p className="text-2xl font-bold text-gray-900">{data.length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl shadow-md border flex items-center gap-5 hover:shadow-lg transition">
-            <div className="p-3 bg-amber-100 rounded-xl">
-              <Users className="w-6 h-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Kasir</p>
-              <p className="text-2xl font-bold text-gray-900">{data.filter((k) => k.position === "kasir").length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl shadow-md border flex items-center gap-5 hover:shadow-lg transition">
-            <div className="p-3 bg-green-100 rounded-xl">
-              <Users className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Dapur</p>
-              <p className="text-2xl font-bold text-gray-900">{data.filter((k) => k.position === "dapur").length}</p>
-            </div>
-          </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#72819a]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari nama karyawan..."
+              className="w-full rounded-xl border border-[#d6dce6] bg-[#fcfdff] py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+            />
+          </label>
+          <select
+            value={position}
+            onChange={(e) => setPosition(e.target.value as Position)}
+            className="rounded-xl border border-[#d6dce6] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+          >
+            <option value="all">Semua Posisi</option>
+            <option value="kasir">Kasir</option>
+            <option value="dapur">Dapur</option>
+          </select>
         </div>
+      </section>
 
-        {/* table wrapper modern */}
-        <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50 border-b">
+      <section className="overflow-hidden rounded-2xl border border-[#dbe2eb] bg-white shadow-[0_12px_30px_rgba(19,28,38,0.07)]">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-[#f3f7fd]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Nama</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Username</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Posisi</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Shift</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[#55657b]">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
                 <tr>
-                  <th className="p-5 text-left text-sm font-bold text-gray-700">Nama</th>
-                  <th className="p-5 text-left text-sm font-bold text-gray-700 hidden md:table-cell">Username</th>
-                  <th className="p-5 text-left text-sm font-bold text-gray-700">Posisi</th>
-                  <th className="p-5 text-left text-sm font-bold text-gray-700 hidden sm:table-cell">Shift</th>
-                  <th className="p-5 text-left text-sm font-bold text-gray-700">Aksi</th>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#617083]">
+                    Memuat data karyawan...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map((k) => (
-                  <tr key={k._id} className="hover:bg-gray-50 transition">
-                    <td className="p-5">
-                      <div className="font-bold text-gray-900">{k.name}</div>
-                      <div className="text-sm text-gray-500 md:hidden">{k.username}</div>
-                    </td>
-                    <td className="p-5 hidden md:table-cell text-gray-700">{k.username}</td>
-                    <td className="p-5">
-                      <span
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                          k.position === "kasir"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {k.position === "kasir" ? (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        ) : (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        )}
-                        {k.position}
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#617083]">
+                    Data karyawan tidak ditemukan.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((karyawan) => (
+                  <tr key={karyawan._id} className="border-t border-[#edf1f7]">
+                    <td className="px-4 py-3 text-sm font-semibold text-[#1b2f49]">{karyawan.name}</td>
+                    <td className="px-4 py-3 text-sm text-[#334962]">{karyawan.username}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className="rounded-full bg-[#eaf4ff] px-2.5 py-1 text-xs font-semibold capitalize text-[#24539a]">
+                        {karyawan.position}
                       </span>
                     </td>
-                    <td className="p-5 capitalize hidden sm:table-cell text-gray-700">{k.shift}</td>
-                    <td className="p-5">
-                      <div className="flex gap-2">
+                    <td className="px-4 py-3 text-sm capitalize text-[#334962]">{karyawan.shift}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => {
-                            setEditing(k);
+                            setEditing(karyawan);
                             setOpen(true);
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition"
-                          title="Edit"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d4dcec] text-[#295496] transition hover:bg-[#edf3ff]"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit3 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(k._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition"
-                          title="Hapus"
+                          onClick={() => handleDelete(karyawan._id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#efd2d2] text-[#b13a3a] transition hover:bg-[#fae9e9]"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-12 text-gray-500">Tidak ada data karyawan.</div>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
 
       <KaryawanFormModal
         open={open}

@@ -64,7 +64,7 @@ export const midtransWebhook = async (req, res) => {
       try {
         console.log("🧾 Generating invoice PDF...");
 
-        const invoicePath = await generateInvoice(order);
+        const invoicePath = await generateInvoiceForWebhook(order);
 
         order.invoicePath = invoicePath;
         await order.save();

@@ -21,6 +21,56 @@ const calculateTotal = async (items) => {
   return total;
 };
 
+const toSafeQty = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.floor(parsed));
+};
+
+const validateStockForItems = async (items) => {
+  const resolved = [];
+  let totalPrice = 0;
+
+  for (const rawItem of items) {
+    const qty = toSafeQty(rawItem.qty);
+    if (qty <= 0) {
+      return { ok: false, message: "Jumlah item tidak valid." };
+    }
+
+    const menu = await Menu.findById(rawItem.menuId);
+    if (!menu) {
+      return { ok: false, message: `Menu ${rawItem.menuId} tidak ditemukan.` };
+    }
+
+    const stock = Number(menu.stock ?? 0);
+    if (!menu.available || stock <= 0) {
+      return { ok: false, message: `${menu.name} sedang habis dan tidak bisa dipesan.` };
+    }
+
+    if (qty > stock) {
+      return {
+        ok: false,
+        message: `Stock ${menu.name} tidak cukup. Sisa stock ${stock}.`,
+      };
+    }
+
+    totalPrice += Number(menu.price || 0) * qty;
+    resolved.push({ rawItem, menu, qty });
+  }
+
+  return { ok: true, resolved, totalPrice };
+};
+
+const decreaseStock = async (resolvedItems) => {
+  for (const entry of resolvedItems) {
+    entry.menu.stock = Math.max(0, Number(entry.menu.stock ?? 0) - entry.qty);
+    if (entry.menu.stock <= 0) {
+      entry.menu.available = false;
+    }
+    await entry.menu.save();
+  }
+};
+
 // ============================
 // 🟢 Get Cart Customer
 // ============================
@@ -51,6 +101,21 @@ export const addToCart = async (req, res) => {
   try {
     const customerId = req.user.id;
     const { menuId, qty } = req.body;
+    const safeQty = toSafeQty(qty);
+
+    if (!menuId || safeQty <= 0) {
+      return res.status(400).json({ message: "menuId dan qty wajib valid." });
+    }
+
+    const menu = await Menu.findById(menuId);
+    if (!menu) {
+      return res.status(404).json({ message: "Menu tidak ditemukan." });
+    }
+
+    const stock = Number(menu.stock ?? 0);
+    if (!menu.available || stock <= 0) {
+      return res.status(400).json({ message: "Menu ini sedang habis." });
+    }
 
     let cart = await Cart.findOne({ customerId });
 
@@ -61,9 +126,20 @@ export const addToCart = async (req, res) => {
     );
 
     if (existingItem) {
-      existingItem.qty += qty;
+      const nextQty = toSafeQty(existingItem.qty) + safeQty;
+      if (nextQty > stock) {
+        return res.status(400).json({
+          message: `Stock tidak cukup. Sisa stock ${menu.name}: ${stock}.`,
+        });
+      }
+      existingItem.qty = nextQty;
     } else {
-      cart.items.push({ menuId, qty });
+      if (safeQty > stock) {
+        return res.status(400).json({
+          message: `Stock tidak cukup. Sisa stock ${menu.name}: ${stock}.`,
+        });
+      }
+      cart.items.push({ menuId, qty: safeQty });
     }
 
     cart.totalPrice = await calculateTotal(cart.items);
@@ -85,6 +161,7 @@ export const updateCartItem = async (req, res) => {
   try {
     const customerId = req.user.id;
     const { menuId, qty } = req.body;
+    const safeQty = toSafeQty(qty);
 
     let cart = await Cart.findOne({ customerId });
     if (!cart) return res.status(404).json({ message: "Cart tidak ditemukan" });
@@ -93,7 +170,27 @@ export const updateCartItem = async (req, res) => {
     if (!item)
       return res.status(404).json({ message: "Item tidak ditemukan di cart" });
 
-    item.qty = qty;
+    if (safeQty <= 0) {
+      cart.items = cart.items.filter((i) => i.menuId.toString() !== menuId);
+    } else {
+      const menu = await Menu.findById(menuId);
+      if (!menu) {
+        return res.status(404).json({ message: "Menu tidak ditemukan." });
+      }
+
+      const stock = Number(menu.stock ?? 0);
+      if (!menu.available || stock <= 0) {
+        return res.status(400).json({ message: "Menu ini sedang habis." });
+      }
+
+      if (safeQty > stock) {
+        return res.status(400).json({
+          message: `Stock tidak cukup. Sisa stock ${menu.name}: ${stock}.`,
+        });
+      }
+
+      item.qty = safeQty;
+    }
 
     cart.totalPrice = await calculateTotal(cart.items);
     await cart.save();
@@ -161,7 +258,9 @@ export const clearCart = async (req, res) => {
 export const checkoutCart = async (req, res) => {
   try {
     const customerId = req.user.id;
-    const { paymentMethod } = req.body;
+    const { paymentMethod, foodNote } = req.body;
+    const sanitizedFoodNote =
+      typeof foodNote === "string" ? foodNote.trim().slice(0, 500) : "";
 
     if (!["cash", "midtrans"].includes(paymentMethod)) {
       return res.status(400).json({
@@ -179,12 +278,18 @@ export const checkoutCart = async (req, res) => {
       return res.status(404).json({ message: "Customer tidak ditemukan" });
     }
 
-    const totalPrice = await calculateTotal(cart.items);
+    const stockCheck = await validateStockForItems(cart.items);
+    if (!stockCheck.ok) {
+      return res.status(400).json({ message: stockCheck.message });
+    }
+
+    const totalPrice = stockCheck.totalPrice;
+    const customerName = customer.username || customer.name;
 
     // ========= CASE 1: CASH =========
     if (paymentMethod === "cash") {
       const newOrder = new Order({
-        customerName: customer.name,
+        customerName,
         items: cart.items,
         totalPrice,
         createdBy: customerId,
@@ -193,9 +298,11 @@ export const checkoutCart = async (req, res) => {
         cookingStatus: "pending",
         assignedToKitchen: false,
         paymentMethod: "cash",
+        foodNote: sanitizedFoodNote,
       });
 
       await newOrder.save();
+      await decreaseStock(stockCheck.resolved);
 
       cart.items = [];
       cart.totalPrice = 0;
@@ -214,12 +321,12 @@ export const checkoutCart = async (req, res) => {
       const midtransResponse = await createMidtransTransaction(
         orderId,
         totalPrice,
-        customer.name,
+        customerName,
         customerId // untuk ambil cart item_details
       );
 
       const newOrder = new Order({
-        customerName: customer.name,
+        customerName,
         items: cart.items,
         totalPrice,
         createdBy: customerId,
@@ -229,9 +336,11 @@ export const checkoutCart = async (req, res) => {
         assignedToKitchen: false,
         paymentMethod: "midtrans",
         midtransOrderId: orderId,
+        foodNote: sanitizedFoodNote,
       });
 
       await newOrder.save();
+      await decreaseStock(stockCheck.resolved);
 
       cart.items = [];
       cart.totalPrice = 0;

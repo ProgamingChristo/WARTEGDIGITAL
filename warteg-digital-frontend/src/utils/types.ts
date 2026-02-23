@@ -6,9 +6,11 @@ export interface MenuType {
   _id: string;
   name: string;
   price: number;
+  stock?: number;
   imageUrl?: string;
   description?: string;
-  category?: string;
+  category?: "makanan" | "minuman" | "lainnya" | string;
+  available?: boolean;
 }
 
 // ==========================
@@ -24,12 +26,15 @@ export interface CartItemType {
 // ==========================
 export interface OrderType {
   _id: string;
+  customerName?: string;
   items: {
-    menuId: MenuType;   // populate
+    menuId: MenuType | null;   // populate bisa null jika menu dihapus
     qty: number;
   }[];
   totalPrice: number;
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "unpaid" | "processing" | "paid" | string;
+  paymentMethod?: "cash" | "midtrans" | string;
+  foodNote?: string;
   createdAt: string;
 }
 
@@ -38,10 +43,13 @@ export interface OrderType {
 // ==========================
 export interface UserType {
   _id?: string;
+  id?: string;
+  username?: string;
   name: string;
   email: string;
   phone?: string;
   address?: string;
+  profileImage?: string;
   role: "customer" | "admin" | "karyawan" | "superadmin";
 }
 
@@ -49,13 +57,15 @@ export interface UserType {
 // ORDER DETAIL (customer)
 // ==========================
 export interface OrderItem {
-  menuId: {
-    _id: string;
-    name: string;
-    price: number;
-    imageUrl?: string;
-    description?: string;
-  };
+  menuId:
+    | {
+        _id: string;
+        name: string;
+        price: number;
+        imageUrl?: string;
+        description?: string;
+      }
+    | null;
   qty: number;
 }
 
@@ -65,6 +75,7 @@ export interface OrderDetail {
   totalPrice: number;
   paymentMethod: string;
   paymentStatus: string;
+  foodNote?: string;
   createdAt: string;
   invoicePath?: string;
 }
@@ -74,11 +85,13 @@ export interface OrderDetail {
 // ==========================
 export interface AdminOrderItemDetail {
   _id: string;          // tambahan agar key-map aman
-  menuId: {
-    name: string;
-    price: number;
-    imageUrl?: string;
-  };
+  menuId:
+    | {
+        name: string;
+        price: number;
+        imageUrl?: string;
+      }
+    | null;
   qty: number;
 }
 

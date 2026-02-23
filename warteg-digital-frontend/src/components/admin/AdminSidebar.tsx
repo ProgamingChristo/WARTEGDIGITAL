@@ -1,85 +1,64 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Utensils,
-  Users,
-  FileText,
-  LogOut,
-} from "lucide-react";
+import { FileText, LayoutDashboard, LogOut, UserRoundCog, Users, UtensilsCrossed } from "lucide-react";
+import { useAdminAuthStore } from "../../store/adminAuthStore";
 
-const SidebarAdmin = () => {
+const sidebarLinks = [
+  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/admin/menu", label: "Kelola Menu", icon: UtensilsCrossed },
+  { path: "/admin/karyawan", label: "Kelola Karyawan", icon: Users },
+  { path: "/admin/order", label: "Laporan Order", icon: FileText },
+  { path: "/admin/profile", label: "Profil Admin", icon: UserRoundCog },
+];
+
+const AdminSidebar = () => {
   const navigate = useNavigate();
+  const { adminLogout } = useAdminAuthStore();
 
   const handleLogout = () => {
-    localStorage.removeItem("tokenAdmin");
-    localStorage.removeItem("adminUser");
-    localStorage.removeItem("adminRole");
+    adminLogout();
     navigate("/admin/login", { replace: true });
   };
 
-  const menuItems = [
-    {
-      path: "/admin/dashboard",
-      label: "Dashboard",
-      icon: <LayoutDashboard size={20} />,
-    },
-    {
-      path: "/admin/menu",
-      label: "Kelola Menu",
-      icon: <Utensils size={20} />,
-    },
-    {
-      path: "/admin/karyawan",
-      label: "Kelola Karyawan",
-      icon: <Users size={20} />,
-    },
-    {
-      path: "/admin/order", // ✅ laporan keuangan / order
-      label: "Laporan Order",
-      icon: <FileText size={20} />,
-    },
-  ];
-
   return (
-    <aside className="w-64 bg-green-700 text-white min-h-screen shadow-lg flex flex-col">
-      {/* Header */}
-      <div className="p-4 text-xl font-bold border-b border-green-900">
-        Admin Panel
+    <aside className="hidden w-72 border-r border-[#d8dfea] bg-[#0f1725] text-white xl:flex xl:flex-col">
+      <div className="border-b border-[#253147] px-6 py-6">
+        <p className="text-xs uppercase tracking-[0.22em] text-[#8aa4cc]">Warteg Digital</p>
+        <p className="mt-2 font-display text-3xl text-white">Admin</p>
       </div>
 
-      {/* Navigation */}
-      <nav className="mt-4 flex-1 px-3 flex flex-col gap-1">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition
-              ${
-                isActive
-                  ? "bg-green-900 text-white"
-                  : "hover:bg-green-800"
-              }`
-            }
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+      <nav className="flex-1 space-y-1 px-3 py-5">
+        {sidebarLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <NavLink
+              key={link.path}
+              to={link.path}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-[#1f5fa8] text-white shadow-[0_8px_18px_rgba(31,95,168,0.35)]"
+                    : "text-[#cad5e8] hover:bg-[#1f293a] hover:text-white"
+                }`
+              }
+            >
+              <Icon className="h-4 w-4" />
+              {link.label}
+            </NavLink>
+          );
+        })}
       </nav>
 
-      {/* Footer – Logout */}
-      <div className="p-3 border-t border-green-900">
+      <div className="border-t border-[#253147] p-3">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-green-800 transition text-left"
+          className="inline-flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#ffcece] transition hover:bg-[#35202a]"
         >
-          <LogOut size={20} />
-          <span>Logout</span>
+          <LogOut className="h-4 w-4" />
+          Logout
         </button>
       </div>
     </aside>
   );
 };
 
-export default SidebarAdmin;
+export default AdminSidebar;

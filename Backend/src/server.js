@@ -38,9 +38,8 @@ app.use((req, res, next) => {
 });
 
 /* 2. Baru middleware lain */
-app.use(express.json());
-// ... route-route
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // =====================================================
 // 📌 FIX: Path helper (karena kita pakai ES Module)

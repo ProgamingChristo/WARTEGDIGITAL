@@ -1,18 +1,27 @@
+@import url("https://fonts.googleapis.com/css2?family=Marcellus&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+:root {
+  --wd-ivory: #f6f0e6;
+  --wd-cream: #efe2cf;
+  --wd-wood: #8d5b34;
+  --wd-gold: #d6a54b;
+  --wd-emerald: #1f6a4a;
+  --wd-deep: #22201b;
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+body {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  color: var(--wd-deep);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(214, 165, 75, 0.22), transparent 35%),
+    radial-gradient(circle at 88% 16%, rgba(31, 106, 74, 0.16), transparent 30%),
+    linear-gradient(180deg, #f8f4ed 0%, #f3e8d8 100%);
+}
+
+.font-display {
+  font-family: "Marcellus", serif;
 }
 
 @keyframes slide-in-right {

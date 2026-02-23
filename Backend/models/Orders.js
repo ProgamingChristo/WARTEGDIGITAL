@@ -50,6 +50,14 @@ const orderSchema = new mongoose.Schema(
     // optional extra fields for midtrans integration
     paymentMethod: { type: String, enum: ["cash", "midtrans"], default: "cash" },
     midtransOrderId: { type: String },
+    invoicePath: { type: String, default: "" },
+
+    foodNote: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 500,
+    },
   },
   { timestamps: true }
 );

@@ -25,7 +25,7 @@ const RegisterCustomer = () => {
 
     try {
       await api.post("/customer/register", form);
-      alert("Registrasi berhasil! Silahkan login.");
+      alert("Registrasi berhasil! Silakan login.");
       navigate("/login");
     } catch (err) {
       console.error(err);
@@ -36,28 +36,20 @@ const RegisterCustomer = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFF4D6] px-4 py-12 font-sans">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-10 space-y-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#f5ecdd] via-[#f3e3c9] to-[#ead8bc] px-4 py-10">
+      <div className="pointer-events-none absolute -left-10 top-20 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-60 w-60 rounded-full bg-emerald-300/20 blur-3xl" />
 
-        {/* Header */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Daftar Akun</h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Buat akun untuk mulai memesan di{" "}
-            <span className="font-semibold text-green-700">Warteg Digital</span>
-          </p>
-        </div>
+      <section className="relative w-full max-w-lg rounded-3xl border border-amber-100 bg-white/90 p-8 shadow-[0_16px_40px_rgba(90,58,26,0.12)] md:p-10">
+        <p className="text-center text-xs uppercase tracking-[0.2em] text-amber-700">Warteg Digital</p>
+        <h1 className="mt-2 text-center font-display text-4xl text-amber-950">Daftar Akun</h1>
+        <p className="mt-1 text-center text-sm text-amber-900/70">Satu akun untuk semua pesanan favoritmu.</p>
 
-        {/* Form */}
-        <form onSubmit={handleRegister} className="space-y-5">
-
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Nama Lengkap
-            </label>
+        <form onSubmit={handleRegister} className="mt-6 grid gap-4 md:grid-cols-2">
+          <label className="md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Nama Lengkap</span>
             <div className="relative">
-              <User size={18} className="absolute left-3 top-3 text-gray-400" />
+              <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="text"
                 name="name"
@@ -65,39 +57,31 @@ const RegisterCustomer = () => {
                 onChange={handleChange}
                 placeholder="Nama lengkap"
                 required
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none text-gray-900"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Email
-            </label>
+          <label className="md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Email</span>
             <div className="relative">
-              <Mail size={18} className="absolute left-3 top-3 text-gray-400" />
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="Alamat email"
+                placeholder="nama@email.com"
                 required
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none text-gray-900"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Password
-            </label>
+          <label className="md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Password</span>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="password"
                 name="password"
@@ -105,19 +89,15 @@ const RegisterCustomer = () => {
                 onChange={handleChange}
                 placeholder="Minimal 6 karakter"
                 required
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none text-gray-900"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Nomor Telepon
-            </label>
+          <label>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Nomor Telepon</span>
             <div className="relative">
-              <Phone size={18} className="absolute left-3 top-3 text-gray-400" />
+              <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="text"
                 name="phone"
@@ -125,63 +105,53 @@ const RegisterCustomer = () => {
                 onChange={handleChange}
                 placeholder="08xxxxxxxxxx"
                 required
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none text-gray-900"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Alamat
-            </label>
+          <label>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Alamat</span>
             <div className="relative">
-              <MapPin size={18} className="absolute left-3 top-3 text-gray-400" />
+              <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="text"
                 name="address"
                 value={form.address}
                 onChange={handleChange}
-                placeholder="Contoh: Jakarta Selatan"
+                placeholder="Jakarta Selatan"
                 required
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none text-gray-900"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center items-center py-3 bg-green-600 hover:bg-green-700 
-              text-white font-semibold rounded-lg shadow-md transition disabled:opacity-60"
+            className="md:col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-emerald-700 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin mr-2" /> Memproses...
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Memproses...
               </>
             ) : (
               <>
                 Daftar Sekarang
-                <ArrowRight size={16} className="ml-2" />
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
 
-          {/* Footer Link */}
-          <p className="text-center text-sm text-gray-600 mt-3">
-            Sudah punya akun?{" "}
-            <Link
-              to="/login"
-              className="font-semibold text-green-600 hover:underline"
-            >
-              Masuk disini
+          <p className="md:col-span-2 text-center text-sm text-amber-900/80">
+            Sudah punya akun? {" "}
+            <Link to="/login" className="font-semibold text-emerald-800 hover:underline">
+              Masuk di sini
             </Link>
           </p>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

@@ -1,13 +1,13 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../api/axios";
 import MenuFormModal from "./MenuFormModal";
 import type { MenuFormData } from "./MenuFormModal";
-import { Search, Plus, Filter, ToggleLeft, Edit, Trash2, ImageOff,  } from "lucide-react";
+import { Edit3, ImageOff, Plus, Search, Trash2 } from "lucide-react";
 
 interface Menu extends MenuFormData {
   _id: string;
   available: boolean;
+  stock: number;
 }
 
 const AdminMenuPage = () => {
@@ -15,18 +15,21 @@ const AdminMenuPage = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Menu | null>(null);
-
-  /* SEARCH & FILTER */
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<"all" | "makanan" | "minuman">("all");
+  const [category, setCategory] = useState<"all" | "makanan" | "minuman" | "lainnya">("all");
 
-  /* FETCH */
   const fetchMenus = async () => {
     try {
       const res = await api.get("/admin/menu");
-      setMenus(res.data.data);
+      const list = Array.isArray(res.data?.data) ? (res.data.data as Menu[]) : [];
+      setMenus(
+        list.map((item) => ({
+          ...item,
+          stock: Number(item.stock ?? 0),
+        }))
+      );
     } catch {
-      alert("Gagal mengambil menu");
+      alert("Gagal mengambil menu.");
     } finally {
       setLoading(false);
     }
@@ -36,211 +39,205 @@ const AdminMenuPage = () => {
     fetchMenus();
   }, []);
 
-  /* CRUD */
   const handleCreate = async (data: MenuFormData) => {
-    await api.post("/admin/menu", data);
-    fetchMenus();
+    try {
+      await api.post("/admin/menu", data);
+      await fetchMenus();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Gagal menambah menu.");
+    }
   };
 
   const handleUpdate = async (data: MenuFormData) => {
     if (!editing) return;
-    await api.put(`/admin/menu/${editing._id}`, data);
-    setEditing(null);
-    fetchMenus();
+    try {
+      await api.put(`/admin/menu/${editing._id}`, data);
+      setEditing(null);
+      await fetchMenus();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Gagal memperbarui menu.");
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus menu ini?")) return;
-    await api.delete(`/admin/menu/${id}`);
-    fetchMenus();
+    try {
+      await api.delete(`/admin/menu/${id}`);
+      await fetchMenus();
+    } catch {
+      alert("Gagal menghapus menu.");
+    }
   };
 
   const toggleAvailable = async (menu: Menu) => {
-    await api.put(`/admin/menu/${menu._id}`, { ...menu, available: !menu.available });
-    fetchMenus();
+    if (!menu.available && menu.stock <= 0) {
+      alert("Tidak bisa mengaktifkan menu dengan stock 0. Tambah stock dulu.");
+      return;
+    }
+
+    try {
+      await api.put(`/admin/menu/${menu._id}`, {
+        available: !menu.available,
+      });
+      await fetchMenus();
+    } catch {
+      alert("Gagal mengubah status menu.");
+    }
   };
 
-  /* FILTER */
-  const filtered = menus.filter((m) => {
-    const matchName = m.name.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = category === "all" || m.category === category;
-    return matchName && matchCategory;
-  });
+  const filtered = useMemo(
+    () =>
+      menus.filter((menu) => {
+        const matchSearch = menu.name.toLowerCase().includes(search.toLowerCase());
+        const matchCategory = category === "all" || menu.category === category;
+        return matchSearch && matchCategory;
+      }),
+    [menus, search, category]
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile : top bar */}
-      <header className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">Kelola Menu</h1>
-        <button
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-          className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah
-        </button>
-      </header>
-
-      <main className="max-w-7xl mx-auto p-4 lg:p-6">
-        {/* Desktop : header + controls */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Kelola Menu</h1>
-
-          <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari menu..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none w-64"
-              />
-            </div>
-
-            {/* Filter */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as "all" | "makanan" | "minuman")}
-                className="pl-10 pr-8 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none appearance-none"
-              >
-                <option value="all">Semua</option>
-                <option value="makanan">Makanan</option>
-                <option value="minuman">Minuman</option>
-              </select>
-            </div>
-
-            {/* Add */}
-            <button
-              onClick={() => {
-                setEditing(null);
-                setOpen(true);
-              }}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium"
-            >
-              <Plus className="w-5 h-5" />
-              Tambah Menu
-            </button>
+    <div className="space-y-5">
+      <section className="rounded-3xl border border-[#dae1ea] bg-white p-5 shadow-[0_18px_44px_rgba(19,28,38,0.08)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="font-display text-3xl text-[#131f2e]">Kelola Menu</h1>
+            <p className="text-sm text-[#5d6572]">Atur harga, stock, dan status menu untuk customer secara real-time.</p>
           </div>
+
+          <button
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#136f63] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f5d53]"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Menu
+          </button>
         </div>
 
-        {/* Mobile : search + filter */}
-        <div className="lg:hidden mb-4 grid grid-cols-2 gap-3">
-          <div className="relative col-span-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#738095]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari menu..."
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none w-full"
+              placeholder="Cari nama menu..."
+              className="w-full rounded-xl border border-[#d6dce6] bg-[#fcfdff] py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
             />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as "all" | "makanan" | "minuman")}
-              className="pl-10 pr-8 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none appearance-none w-full"
-            >
-              <option value="all">Semua</option>
-              <option value="makanan">Makanan</option>
-              <option value="minuman">Minuman</option>
-            </select>
-          </div>
-        </div>
+          </label>
 
-        {/* GRID CARDS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-          {loading ? (
-            <div className="col-span-full flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-gray-500">
-              <ImageOff className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg">Belum ada menu</p>
-            </div>
-          ) : (
-            filtered.map((menu) => (
-              <div
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as "all" | "makanan" | "minuman" | "lainnya")}
+            className="rounded-xl border border-[#d6dce6] bg-[#fcfdff] px-3 py-2.5 text-sm outline-none transition focus:border-[#136f63] focus:ring-2 focus:ring-[#d6efe9]"
+          >
+            <option value="all">Semua Kategori</option>
+            <option value="makanan">Makanan</option>
+            <option value="minuman">Minuman</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, idx) => (
+            <div key={`menu-skeleton-${idx}`} className="h-72 animate-pulse rounded-2xl border border-[#dce2eb] bg-white/70" />
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="col-span-full rounded-2xl border border-dashed border-[#cfd8e4] bg-white/70 p-12 text-center">
+            <ImageOff className="mx-auto h-10 w-10 text-[#99a4b5]" />
+            <p className="mt-2 text-sm text-[#697487]">Menu belum tersedia untuk filter saat ini.</p>
+          </div>
+        ) : (
+          filtered.map((menu) => {
+            const isOutOfStock = Number(menu.stock ?? 0) <= 0;
+            const active = menu.available && !isOutOfStock;
+
+            return (
+              <article
                 key={menu._id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                className="overflow-hidden rounded-2xl border border-[#dbe2eb] bg-white shadow-[0_8px_20px_rgba(19,28,38,0.06)]"
               >
-                {/* Image */}
-                <div className="aspect-video bg-gray-100 relative overflow-hidden">
+                <div className="relative h-44 bg-[#edf1f8]">
                   <img
-                    src={menu.imageUrl || "https://via.placeholder.com/400x225/f3f4f6/9ca3af?text=No+Image"}
+                    src={menu.imageUrl || "https://via.placeholder.com/600x340?text=Menu"}
                     alt={menu.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute top-2 right-2">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        menu.available
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-600"
-                      }`}
-                    >
-                      {menu.available ? "Aktif" : "Nonaktif"}
-                    </span>
+                  <div className="absolute left-3 top-3 rounded-full bg-[rgba(16,21,31,0.72)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+                    {menu.category}
+                  </div>
+                  <div
+                    className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      active ? "bg-[#d8f5e8] text-[#0f7042]" : "bg-[#f7dede] text-[#a12828]"
+                    }`}
+                  >
+                    {active ? "Aktif" : "Nonaktif"}
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-3 lg:p-4">
-                  <h3 className="font-bold text-base lg:text-lg text-gray-900 mb-1 truncate">{menu.name}</h3>
-                  <p className="text-xs lg:text-sm text-gray-500 mb-2 capitalize">{menu.category}</p>
-                  <p className="text-xs lg:text-sm text-gray-600 mb-3 line-clamp-2">{menu.description}</p>
-                  
+                <div className="space-y-3 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 text-lg font-bold text-[#152235]">{menu.name}</h3>
+                    <p className="mt-1 line-clamp-2 min-h-[2.4rem] text-sm text-[#5f6776]">
+                      {menu.description?.trim() || "Belum ada deskripsi menu."}
+                    </p>
+                  </div>
+
                   <div className="flex items-center justify-between">
-                    <span className="text-lg lg:text-xl font-bold text-green-600">
-                      Rp {menu.price.toLocaleString("id-ID")}
-                    </span>
-                    
-                    {/* Actions */}
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => toggleAvailable(menu)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                        title={menu.available ? "Nonaktifkan" : "Aktifkan"}
-                      >
-                        <ToggleLeft className="w-4 h-4" />
-                      </button>
+                    <p className="text-lg font-bold text-[#136f63]">Rp {Number(menu.price || 0).toLocaleString("id-ID")}</p>
+                    <p className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isOutOfStock ? "bg-[#fbe6e6] text-[#b03a3a]" : "bg-[#eaf6ef] text-[#1c7d4e]"}`}>
+                      Stock: {Number(menu.stock || 0)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      onClick={() => toggleAvailable(menu)}
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                        active
+                          ? "bg-[#ffe4e4] text-[#a83b3b] hover:bg-[#ffd5d5]"
+                          : "bg-[#def6eb] text-[#0f7042] hover:bg-[#cef0e0]"
+                      }`}
+                    >
+                      {active ? "Nonaktifkan" : "Aktifkan"}
+                    </button>
+
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => {
                           setEditing(menu);
                           setOpen(true);
                         }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                        title="Edit"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d2dae4] text-[#3b495e] transition hover:bg-[#f1f4f9]"
+                        title="Edit menu"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit3 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(menu._id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Hapus"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#ebd0d0] text-[#b13a3a] transition hover:bg-[#fbe8e8]"
+                        title="Hapus menu"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </main>
+              </article>
+            );
+          })
+        )}
+      </section>
 
-      {/* Modal */}
       <MenuFormModal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
         initialData={editing}
         onSubmit={editing ? handleUpdate : handleCreate}
       />

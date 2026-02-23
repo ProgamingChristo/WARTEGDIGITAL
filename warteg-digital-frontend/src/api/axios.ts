@@ -11,11 +11,7 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
-/* ======================================================
-   REQUEST INTERCEPTOR
-   - Admin token HANYA untuk /admin/*
-   - Customer token untuk endpoint lain
-====================================================== */
+
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const adminToken = localStorage.getItem("tokenAdmin");
@@ -41,12 +37,6 @@ api.interceptors.request.use(
   },
   (err: AxiosError) => Promise.reject(err)
 );
-
-/* ======================================================
-   RESPONSE INTERCEPTOR
-   - Refresh hanya untuk CUSTOMER
-   - Admin 401 → logout langsung
-====================================================== */
 let isRefreshing = false;
 let failedQueue: Array<(token: string | null) => void> = [];
 

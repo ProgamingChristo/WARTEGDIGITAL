@@ -21,6 +21,7 @@ const LoginKaryawan = () => {
       const { token, data } = res.data;
       localStorage.setItem("tokenKaryawan", token);
       localStorage.setItem("karyawanRole", data.position); // "kasir" | "dapur"
+      localStorage.setItem("karyawanShift", data.shift ?? "");
       navigate(data.position === "kasir" ? "/karyawan/kasir" : "/karyawan/kitchen", { replace: true });
     } catch {
       alert("Username / password salah");

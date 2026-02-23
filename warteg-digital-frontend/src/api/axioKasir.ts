@@ -5,7 +5,9 @@ const axiosKasir = axios.create({
 });
 
 axiosKasir.interceptors.request.use((config) => {
-  const token = localStorage.getItem("tokenKasir");
+  const token =
+    localStorage.getItem("tokenKaryawan") ??
+    localStorage.getItem("tokenKasir");
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }

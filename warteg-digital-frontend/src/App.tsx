@@ -15,10 +15,12 @@ import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import SuccessPage from "./pages/Checkout/SuccessPage";
 import OrderHistoryPage from "./pages/Order/OrderHistoryPage";
 import OrderDetailPage from "./pages/Customer/OrderDetailPage";
+import CustomerProfilePage from "./pages/Customer/CustomerProfilePage";
 
 /* ================= ADMIN ================= */
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import AdminMenuPage from "./pages/admin/menu/AdminMenuPage";
 import AdminOrderPage from "./pages/admin/order/AdminOrderPage";
 import AdminKaryawanPage from "./components/admin/karyawan/AdminKaryawanPage";
@@ -54,6 +56,7 @@ const App = () => {
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/order/history" element={<OrderHistoryPage />} />
           <Route path="/order/:orderId" element={<OrderDetailPage />} />
+          <Route path="/profile" element={<CustomerProfilePage />} />
         </Route>
 
         {/* CUSTOMER AUTH */}
@@ -74,6 +77,7 @@ const App = () => {
           }
         >
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<AdminProfilePage />} />
           <Route path="menu" element={<AdminMenuPage />} />
           <Route path="karyawan" element={<AdminKaryawanPage />} />
           <Route path="order" element={<AdminOrderPage />} />

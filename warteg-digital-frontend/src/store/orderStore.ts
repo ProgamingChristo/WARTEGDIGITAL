@@ -21,8 +21,7 @@ export const useOrderStore = create<OrderState>((set) => ({
 
       // backend kamu biasanya memetakan data di: res.data.data
       const data = res.data.data || res.data;
-
-      set({ orders: data, loading: false });
+      set({ orders: Array.isArray(data) ? data : [], loading: false });
 
     } catch (err) {
       console.error("Failed fetchOrders:", err);

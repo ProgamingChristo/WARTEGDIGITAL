@@ -4,6 +4,10 @@ import { create } from "zustand";
 export interface AdminUser {
   id: string; // backend gunakan "id" bukan "_id"
   username: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  profileImage?: string;
   role: "admin" | "superadmin";
 }
 
@@ -13,6 +17,7 @@ interface AdminAuthState {
   adminRole: string | null;
 
   setAdminAuth: (token: string, admin: AdminUser) => void;
+  updateAdminUser: (payload: Partial<AdminUser>) => void;
   adminLogout: () => void;
 }
 
@@ -29,7 +34,7 @@ const safeParse = (key: string): AdminUser | null => {
 };
 
 /* ---------- STORE ---------- */
-export const useAdminAuthStore = create<AdminAuthState>((set) => ({
+export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
   tokenAdmin: localStorage.getItem("tokenAdmin") ?? null,
   adminUser: safeParse("adminUser"),
   adminRole: localStorage.getItem("adminRole") ?? null,
@@ -50,6 +55,19 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
       tokenAdmin: token,
       adminUser: admin,
       adminRole: admin.role,
+    });
+  },
+
+  updateAdminUser: (payload) => {
+    const current = get().adminUser;
+    if (!current) return;
+
+    const next = { ...current, ...payload };
+    localStorage.setItem("adminUser", JSON.stringify(next));
+
+    set({
+      adminUser: next,
+      adminRole: next.role,
     });
   },
 

@@ -5,7 +5,9 @@ const axiosDapur = axios.create({
 });
 
 axiosDapur.interceptors.request.use((config) => {
-  const token = localStorage.getItem("tokenDapur");
+  const token =
+    localStorage.getItem("tokenKaryawan") ??
+    localStorage.getItem("tokenDapur");
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -10,7 +10,7 @@ export interface AdminOrder {
   items: OrderItem[];
   totalPrice: number;
   paymentMethod: "cash" | "midtrans";
-  paymentStatus: "paid" | "unpaid";
+  paymentStatus: "paid" | "processing" | "unpaid" | string;
   status: string; // backend driven
   cookingStatus: string;
   assignedToKitchen: boolean;

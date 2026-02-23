@@ -1,175 +1,170 @@
-// src/pages/Cart/CartPage.tsx
-import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { useCartStore } from "../../store/cartStore";
 import { formatRupiah } from "../../utils/helpers";
-import { ArrowLeft, Plus, Minus, Trash2 } from "lucide-react";
-import logo from "../../assets/logo.png";
-import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Plus, Minus, Trash2, CookingPot, NotebookText } from "lucide-react";
 
 const CartPage = () => {
-    const navigate = useNavigate();
-  const {
-    items,
-    total,
-    loading,
-    fetchCart,
-    updateCartItem,
-    deleteCartItem,
-  } = useCartStore();
+  const navigate = useNavigate();
+  const { items, total, loading, fetchCart, updateCartItem, deleteCartItem } = useCartStore();
+  const [foodNote, setFoodNote] = useState(() => localStorage.getItem("foodNote") ?? "");
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
-  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  useEffect(() => {
+    localStorage.setItem("foodNote", foodNote);
+  }, [foodNote]);
+
+  const safeItems = useMemo(() => items.filter((it) => Boolean(it.menu?._id)), [items]);
+  const totalQty = safeItems.reduce((sum, item) => sum + item.qty, 0);
 
   return (
-    <div className="min-h-screen bg-[#FFF8EA] pb-10">
-      <div className="max-w-3xl mx-auto px-4 py-6">
-
-        {/* ================= HEADER ================= */}
-        <div className="flex items-center justify-center relative mb-6">
+    <div className="space-y-6">
+      <header className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm md:p-5">
+        <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="absolute left-0 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:bg-gray-100 transition"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-900 transition hover:-translate-y-0.5"
           >
-            <ArrowLeft className="text-orange-600" size={20} />
+            <ArrowLeft className="h-4 w-4" />
           </Link>
-
-          <div className="flex items-center gap-2">
-            <img src={logo} className="w-8 h-8 rounded-full shadow" />
-            <h1 className="text-xl font-bold text-gray-800 tracking-wide">
-              Keranjang
-            </h1>
+          <div>
+            <p className="font-display text-2xl text-amber-950">Keranjang Belanja</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-amber-700">Siap diproses ke dapur</p>
           </div>
         </div>
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+          <CookingPot className="h-3.5 w-3.5" />
+          {totalQty} item
+        </span>
+      </header>
 
-        {/* ================= LOADING ================= */}
-        {loading && (
-          <p className="text-center text-gray-500">Memuat keranjang...</p>
-        )}
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={`cart-skeleton-${idx}`} className="h-28 animate-pulse rounded-2xl border border-amber-100 bg-white/70" />
+          ))}
+        </div>
+      ) : safeItems.length === 0 ? (
+        <section className="rounded-2xl border border-dashed border-amber-300 bg-white/75 p-12 text-center">
+          <p className="font-display text-3xl text-amber-900">Keranjang masih kosong</p>
+          <p className="mt-2 text-sm text-amber-900/70">Pilih menu dulu, lalu kembali checkout dari sini.</p>
+          <Link
+            to="/"
+            className="mt-5 inline-flex rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800"
+          >
+            Jelajahi Menu
+          </Link>
+        </section>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-[1.65fr_1fr]">
+          <section className="space-y-4">
+            {safeItems.map((item) => (
+              <article
+                key={item.menu._id}
+                className="rounded-2xl border border-amber-100 bg-white/90 p-4 shadow-[0_8px_20px_rgba(90,58,26,0.08)]"
+              >
+                <div className="flex gap-4">
+                  <img
+                    src={item.menu.imageUrl || "https://via.placeholder.com/240x180?text=Menu"}
+                    alt={item.menu.name}
+                    className="h-24 w-24 rounded-xl object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="font-display text-xl text-amber-950">{item.menu.name}</p>
+                    <p className="line-clamp-2 text-xs text-amber-900/70">
+                      {item.menu.description?.trim() || "Masakan tradisional dengan sentuhan modern."}
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-emerald-800">{formatRupiah(item.menu.price * item.qty)}</p>
+                    <p className="mt-1 text-xs font-medium text-amber-900/70">
+                      Stock tersedia: {Number(item.menu.stock ?? 0)}
+                    </p>
 
-        {/* ================= EMPTY ================= */}
-        {!loading && items.length === 0 && (
-          <div className="text-center py-10">
-            <i className="fas fa-shopping-basket text-5xl text-gray-300 mb-3"></i>
-            <p className="text-gray-600 mb-4">Keranjang kamu masih kosong.</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-1">
+                        <button
+                          onClick={() => updateCartItem(item.menu._id, item.qty - 1)}
+                          disabled={item.qty <= 1}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-amber-900 transition hover:bg-amber-100 disabled:opacity-40"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="min-w-6 text-center text-sm font-bold text-amber-950">{item.qty}</span>
+                        <button
+                          onClick={() => {
+                            const stock = Number(item.menu.stock ?? 0);
+                            if (stock > 0 && item.qty >= stock) {
+                              alert(`Stock maksimal ${stock} untuk ${item.menu.name}.`);
+                              return;
+                            }
+                            updateCartItem(item.menu._id, item.qty + 1);
+                          }}
+                          disabled={Number(item.menu.stock ?? 0) > 0 && item.qty >= Number(item.menu.stock ?? 0)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-amber-900 transition hover:bg-amber-100"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
 
-            <Link
-              to="/"
-              className="inline-block bg-orange-500 text-white px-6 py-2 rounded-full shadow hover:bg-orange-600 transition"
-            >
-              Tambah Menu
-            </Link>
-          </div>
-        )}
-
-        {/* ================= ITEMS ================= */}
-        <div className="grid gap-4">
-          {items.map((it) => (
-            <div
-              key={it.menu._id}
-              className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 flex gap-4 items-center"
-            >
-              <img
-                src={it.menu.imageUrl || "https://via.placeholder.com/150"}
-                alt={it.menu.name}
-                className="w-24 h-24 rounded-xl object-cover shadow"
-              />
-
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{it.menu.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-1">
-                  {it.menu.description || "Menu spesial warteg"}
-                </p>
-
-                <p className="font-bold text-orange-600 mt-2">
-                  {formatRupiah(it.menu.price * it.qty)}
-                </p>
-
-                {/* Qty Controls */}
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateCartItem(it.menu._id, it.qty - 1)}
-                      disabled={it.qty <= 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-40 transition"
-                    >
-                      <Minus size={16} />
-                    </button>
-
-                    <span className="w-6 text-center text-gray-800 font-semibold">
-                      {it.qty}
-                    </span>
-
-                    <button
-                      onClick={() => updateCartItem(it.menu._id, it.qty + 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 transition"
-                    >
-                      <Plus size={16} />
-                    </button>
+                      <button
+                        onClick={() => deleteCartItem(item.menu._id)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+                        title="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
+                </div>
+              </article>
+            ))}
 
-                  {/* Delete */}
-                  <button
-                    onClick={() => deleteCartItem(it.menu._id)}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition"
-                    title="Hapus"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+            <section className="rounded-2xl border border-amber-100 bg-white/90 p-4 shadow-sm">
+              <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-amber-900">
+                <NotebookText className="h-4 w-4" />
+                Catatan Makanan
+              </p>
+              <textarea
+                value={foodNote}
+                onChange={(e) => setFoodNote(e.target.value)}
+                rows={4}
+                placeholder="Contoh: jangan pedas, sambal dipisah, tambah kuah..."
+                className="w-full resize-none rounded-xl border border-amber-200 bg-[#fffdf8] px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+            </section>
+          </section>
+
+          <aside className="h-fit rounded-2xl border border-amber-100 bg-white/90 p-5 shadow-[0_8px_20px_rgba(90,58,26,0.08)] lg:sticky lg:top-24">
+            <p className="font-display text-2xl text-amber-950">Ringkasan</p>
+
+            <div className="mt-4 space-y-2 text-sm text-amber-900/80">
+              <div className="flex items-center justify-between">
+                <span>Total Item</span>
+                <span className="font-semibold text-amber-950">{totalQty} pcs</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Ongkir</span>
+                <span className="font-semibold text-emerald-700">Gratis</span>
+              </div>
+              <div className="mt-3 border-t border-amber-100 pt-3">
+                <div className="flex items-center justify-between text-base font-bold text-amber-950">
+                  <span>Total Bayar</span>
+                  <span className="text-emerald-800">{formatRupiah(total)}</span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* =================== CATATAN MAKANAN =================== */}
-        {items.length > 0 && (
-          <div className="mt-6 bg-white rounded-xl p-4 border border-orange-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
-              Catatan Makanan
-            </h3>
-            <textarea
-              className="w-full bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
-              rows={3}
-              placeholder="Contoh: Jangan pedas, sausnya dipisah, tambahkan nasi..."
-            />
-          </div>
-        )}
-
-        {/* =================== FOOTER (TOTAL) =================== */}
-        {items.length > 0 && (
-          <div className="mt-8 mb-10 bg-white rounded-xl p-5 shadow border border-orange-100">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Total Item</span>
-              <span className="text-gray-900 font-medium">{totalQty} pcs</span>
-            </div>
-
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Ongkir</span>
-              <span className="text-green-600 font-medium">Gratis</span>
-            </div>
-
-            <div className="flex justify-between text-lg font-bold mb-3">
-              <span>Total Bayar</span>
-              <span className="text-orange-600">{formatRupiah(total)}</span>
-            </div>
 
             <button
-  onClick={() => navigate("/checkout")}
-  className="w-full mt-4 bg-gradient-to-r from-orange-500 to-amber-500 
-             text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl 
-             transition transform active:scale-95"
->
-  Checkout
-</button>
-            
-          </div>
-        )}
-
-      </div>
+              onClick={() => navigate("/checkout", { state: { foodNote: foodNote.trim() } })}
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-emerald-700 hover:to-emerald-500"
+            >
+              Lanjut Checkout
+            </button>
+          </aside>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,10 +4,12 @@ import {
   loginKaryawan,
   getAllKaryawan,
   absenMasuk,
+  getAttendanceStatus,
   kasirConfirmPayment,
   getAllOrders,
   getOrdersForKitchen,
-  updateCookingStatus
+  updateCookingStatus,
+  getFeedbackForKitchen
 } from "../controllers/karyawanController.js";
 
 import {
@@ -28,6 +30,7 @@ router.get("/", verifyToken, verifyKaryawan, getAllKaryawan);
 
 // 🕓 Absensi
 router.post("/absen", verifyToken, verifyKaryawan, absenMasuk);
+router.get("/absen/status", verifyToken, verifyKaryawan, getAttendanceStatus);
 
 // =========================
 // ✅ Kasir — Konfirmasi Pembayaran
@@ -39,6 +42,7 @@ router.get("/orders", verifyToken, verifyKaryawan, getAllOrders);
 // ✅ Dapur — Ambil order yang harus dimasak
 // =========================
 router.get("/order/kitchen", verifyToken, verifyDapur, getOrdersForKitchen);
+router.get("/feedback", verifyToken, verifyDapur, getFeedbackForKitchen);
 
 // ✅ Dapur — Update status masak
 router.put("/order/:id/cooking", verifyToken, verifyDapur, updateCookingStatus);

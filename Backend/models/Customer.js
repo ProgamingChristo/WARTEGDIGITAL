@@ -3,6 +3,11 @@ import bcrypt from "bcrypt";
 
 const customerSchema = new mongoose.Schema(
   {
+    username: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     name: {
       type: String,
       required: true,
@@ -28,6 +33,11 @@ const customerSchema = new mongoose.Schema(
     address: {
       type: String,
       required: true,
+    },
+    profileImage: {
+      type: String,
+      default: "",
+      trim: true,
     },
     orderHistory: [
       {

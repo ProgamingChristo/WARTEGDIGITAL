@@ -1,15 +1,25 @@
 import api from "./axios";
 
-export const registerCustomer = async (data: {
-  username: string;
-  password: string;
-}) => {
-  return await api.post("/customer/register", data);
+type UpdateProfilePayload = {
+  username?: string;
+  address?: string;
+  profileImage?: string;
+  removeProfileImage?: boolean;
 };
 
-export const loginCustomer = async (data: {
-  username: string;
-  password: string;
-}) => {
-  return await api.post("/customer/login", data);
+type UpdatePasswordPayload = {
+  oldPassword: string;
+  newPassword: string;
+};
+
+export const getCustomerProfile = async () => {
+  return await api.get("/customer/profile");
+};
+
+export const updateCustomerProfile = async (payload: UpdateProfilePayload) => {
+  return await api.put("/customer/profile", payload);
+};
+
+export const updateCustomerPassword = async (payload: UpdatePasswordPayload) => {
+  return await api.put("/customer/profile/password", payload);
 };

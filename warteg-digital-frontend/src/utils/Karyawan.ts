@@ -6,6 +6,11 @@ export interface Karyawan {
   position: "dapur" | "kasir";
   shift: "pagi" | "siang" | "malam";
   role: string;
+  attendance: {
+    date: string;
+    status: "hadir" | "izin" | "alpha" | string;
+  }[];
+  createdAt: string;
 }
 
 export interface KaryawanFormData {

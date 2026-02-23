@@ -1,7 +1,13 @@
 import { create } from "zustand";
 
 interface User {
-  username: string;
+  id?: string;
+  username?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  profileImage?: string;
   role: string;
 }
 
@@ -10,6 +16,7 @@ interface AuthState {
   user: User | null;
   role: string | null;
   setAuth: (token: string, user: User, role: string) => void;
+  updateUser: (user: Partial<User>, token?: string) => void;
   logout: () => void;
 }
 
@@ -27,7 +34,7 @@ const safeParse = (key: string): User | null => {
   }
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem("token") ?? null,
   user: safeParse("user"),
   role: localStorage.getItem("role") ?? null,
@@ -44,6 +51,25 @@ export const useAuthStore = create<AuthState>((set) => ({
       token,
       user,
       role,
+    });
+  },
+
+  updateUser: (payload, nextToken) => {
+    const currentUser = get().user;
+    const mergedUser = {
+      ...(currentUser ?? { role: get().role ?? "customer" }),
+      ...payload,
+    } as User;
+
+    const tokenToSave = nextToken ?? get().token;
+    if (tokenToSave) {
+      localStorage.setItem("token", tokenToSave);
+    }
+    localStorage.setItem("user", JSON.stringify(mergedUser));
+
+    set({
+      token: tokenToSave ?? null,
+      user: mergedUser,
     });
   },
 

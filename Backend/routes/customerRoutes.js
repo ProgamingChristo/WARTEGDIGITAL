@@ -5,10 +5,13 @@ import {
   loginCustomer,
   createOrderCustomer,
   getOrderHistoryCustomer,
+  getCustomerProfile,
+  updateCustomerProfile,
   updateUsername,
   updatePassword,
   getAllMenuCustomer,
-  getOrderDetailCustomer
+  getOrderDetailCustomer,
+  submitFeedback
 } from "../controllers/customerController.js";
 
 import { verifyToken, verifyCustomer } from "../middleware/authMiddleware.js";
@@ -29,6 +32,7 @@ router.post("/logout", (req, res) => {
 // =======================
 // Customer melihat menu (public)
 router.get("/menu", getAllMenuCustomer);
+router.post("/feedback", submitFeedback);
 router.post("/order", verifyToken, verifyCustomer, createOrderCustomer);
 // Customer History
 router.get("/order/history", verifyToken, verifyCustomer, getOrderHistoryCustomer);
@@ -42,6 +46,9 @@ router.get("/order/:id", verifyToken, verifyCustomer, getOrderDetailCustomer);
 // =======================
 // 👤 UPDATE PROFILE CUSTOMER
 // =======================
+router.get("/profile", verifyToken, verifyCustomer, getCustomerProfile);
+router.put("/profile", verifyToken, verifyCustomer, updateCustomerProfile);
+router.put("/profile/password", verifyToken, verifyCustomer, updatePassword);
 
 // Update Username
 router.put("/update-username", verifyToken, verifyCustomer, updateUsername);

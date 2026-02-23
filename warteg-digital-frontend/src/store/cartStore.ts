@@ -73,6 +73,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       if (hasResponseStatus(err) && err.response.status === 401) {
         alert('Silakan login terlebih dahulu.');
       }
+      throw err;
     }
   },
 
@@ -92,6 +93,14 @@ export const useCartStore = create<CartState>((set, get) => ({
       await get().fetchCart(); // reload cart
     } catch (err: unknown) {
       console.error('❌ Failed updateCartItem:', err);
+      const maybeMessage =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as any).response?.data?.message === 'string'
+          ? (err as any).response.data.message
+          : null;
+      if (maybeMessage) alert(maybeMessage);
     }
   },
 
@@ -107,7 +116,7 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   clearCart: async () => {
     try {
-      await api.post('/cart/clear');
+      await api.delete('/cart/clear');
       set({ items: [], total: 0 });
     } catch (err: unknown) {
       console.error('❌ Failed clearCart:', err);

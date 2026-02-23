@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 
 const SuccessPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  // baca state dulu, kalau kosong ambil dari localStorage
   const paymentMethod =
     state?.paymentMethod ??
     (() => {
@@ -16,42 +16,32 @@ const SuccessPage = () => {
       }
     })();
 
-  // bersihkan localStorage setelah dibaca
   useEffect(() => {
     localStorage.removeItem("paymentMethod");
   }, []);
 
   return (
-    <div className="min-h-screen bg-orange-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow p-6 text-center">
-        {/* Icon centang */}
-        <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-          <svg
-            className="w-8 h-8 text-green-500"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
+      <section className="w-full max-w-xl rounded-3xl border border-amber-100 bg-white/90 p-8 text-center shadow-[0_10px_35px_rgba(90,58,26,0.12)]">
+        <div className="mx-auto inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+          <CheckCircle2 className="h-10 w-10" />
         </div>
 
-        <h1 className="text-xl font-bold text-gray-800 mb-2">Pesanan berhasil!</h1>
-
-        <p className="text-gray-600 mb-6">
+        <h1 className="mt-5 font-display text-4xl text-amber-950">Pesanan Berhasil</h1>
+        <p className="mt-3 text-sm leading-relaxed text-amber-900/75 md:text-base">
           {paymentMethod === "cash"
-            ? "Silakan lakukan pembayaran di kasir. Kami akan segera menyajikan pesanan Anda setelah pembayaran dikonfirmasi."
-            : "Terima kasih sudah bayar, silahkan tunggu makanan Anda."}
+            ? "Silakan lakukan pembayaran di kasir. Setelah konfirmasi, pesanan langsung kami proses ke dapur."
+            : "Pembayaran berhasil diterima. Terima kasih, pesanan Anda sedang disiapkan di dapur."}
         </p>
 
         <button
           onClick={() => navigate("/")}
-          className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl shadow hover:shadow-lg transition"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-emerald-700 hover:to-emerald-500"
         >
           Kembali ke Menu
+          <ArrowRight className="h-4 w-4" />
         </button>
-      </div>
+      </section>
     </div>
   );
 };

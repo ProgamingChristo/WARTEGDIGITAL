@@ -25,20 +25,15 @@ const LoginCustomer = () => {
 
     try {
       const res = await api.post("/customer/login", form);
-
       const token: string = res.data.token;
       const user = res.data.data;
 
       setAuth(token, user, "customer");
-
       alert("Login berhasil!");
       navigate("/");
     } catch (err: unknown) {
       if (isAxiosError(err)) {
-        alert(
-          err.response?.data?.message ??
-            "Login gagal, cek email/password."
-        );
+        alert(err.response?.data?.message ?? "Login gagal, cek email/password.");
       } else {
         alert("Terjadi kesalahan tak terduga!");
       }
@@ -48,92 +43,74 @@ const LoginCustomer = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFF4D6] px-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-10 border border-gray-200">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#f5ecdd] via-[#f3e3c9] to-[#ead8bc] px-4 py-10">
+      <div className="pointer-events-none absolute -left-16 top-10 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-12 bottom-10 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
 
-        {/* Header */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800">
-            Masuk Akun
-          </h2>
-          <p className="text-gray-500 mt-1">
-            Selamat datang kembali di{" "}
-            <span className="font-semibold">Warteg Digital</span>
-          </p>
-        </div>
+      <section className="relative w-full max-w-md rounded-3xl border border-amber-100 bg-white/90 p-8 shadow-[0_16px_40px_rgba(90,58,26,0.12)] md:p-10">
+        <p className="text-center text-xs uppercase tracking-[0.2em] text-amber-700">Warteg Digital</p>
+        <h1 className="mt-2 text-center font-display text-4xl text-amber-950">Masuk Akun</h1>
+        <p className="mt-1 text-center text-sm text-amber-900/70">Akses pesanan favoritmu dalam hitungan detik.</p>
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-6">
-
-          {/* Input Email */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Email
-            </label>
-            <div className="relative mt-1">
-              <Mail size={18} className="absolute left-3 top-3 text-gray-400" />
+        <form onSubmit={handleLogin} className="mt-7 space-y-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Email</span>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="email"
                 name="email"
                 required
-                placeholder="Masukkan email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none transition text-gray-800"
+                placeholder="nama@email.com"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Input Password */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Password
-            </label>
-            <div className="relative mt-1">
-              <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-amber-900/70">Password</span>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-700/70" />
               <input
                 type="password"
                 name="password"
                 required
-                placeholder="Masukkan password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg 
-                  focus:ring-2 focus:ring-green-500 outline-none transition text-gray-800"
+                placeholder="Masukkan password"
+                className="w-full rounded-xl border border-amber-200 bg-[#fffdf8] py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
-          </div>
+          </label>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center items-center py-3 bg-green-600 hover:bg-green-700
-             text-white font-semibold rounded-lg shadow-md transition disabled:opacity-70"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-emerald-700 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin mr-2 h-5 w-5" /> Memproses...
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Memproses...
               </>
             ) : (
               <>
                 Masuk Sekarang
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
 
-          <p className="text-center text-sm text-gray-600 pt-2">
-            Belum punya akun?{" "}
-            <Link
-              to="/register"
-              className="font-semibold text-green-600 hover:underline"
-            >
-              Daftar disini
+          <p className="pt-2 text-center text-sm text-amber-900/80">
+            Belum punya akun? {" "}
+            <Link to="/register" className="font-semibold text-emerald-800 hover:underline">
+              Daftar di sini
             </Link>
           </p>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

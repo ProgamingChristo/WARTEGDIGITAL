@@ -11,10 +11,28 @@ export const kasirCreateOrder = async (req, res) => {
     }
 
     let totalPrice = 0;
+    const resolvedMenus = [];
     for (const item of items) {
+      const safeQty = Number(item.qty);
+      if (!Number.isFinite(safeQty) || safeQty <= 0) {
+        return res.status(400).json({ message: "Qty tidak valid." });
+      }
+
       const menu = await Menu.findById(item.menuId);
       if (!menu) return res.status(404).json({ message: `Menu ${item.menuId} tidak ditemukan` });
-      totalPrice += menu.price * item.qty;
+
+      const stock = Number(menu.stock ?? 0);
+      if (!menu.available || stock <= 0) {
+        return res.status(400).json({ message: `${menu.name} sedang habis.` });
+      }
+      if (safeQty > stock) {
+        return res.status(400).json({
+          message: `Stock ${menu.name} tidak cukup. Sisa stock ${stock}.`,
+        });
+      }
+
+      totalPrice += Number(menu.price || 0) * safeQty;
+      resolvedMenus.push({ menu, qty: Math.floor(safeQty) });
     }
 
     const newOrder = new Order({
@@ -29,6 +47,14 @@ export const kasirCreateOrder = async (req, res) => {
     });
 
     await newOrder.save();
+
+    for (const entry of resolvedMenus) {
+      entry.menu.stock = Math.max(0, Number(entry.menu.stock ?? 0) - entry.qty);
+      if (entry.menu.stock <= 0) {
+        entry.menu.available = false;
+      }
+      await entry.menu.save();
+    }
 
     res.status(201).json({
       message: "Order berhasil dibuat oleh kasir!",

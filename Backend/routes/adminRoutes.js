@@ -16,6 +16,8 @@ import {
   deleteOrder,
   getAdminOrderById,
   getAllAbsensi, // ✅ Pindahkan ke sini biar semua controller di satu tempat
+  getAdminProfile,
+  updateAdminProfile,
 } from "../controllers/adminController.js";
 
 import { verifyToken, verifyAdmin } from "../middleware/authMiddleware.js";
@@ -27,6 +29,8 @@ const router = express.Router();
 // ==========================
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
+router.get("/profile", verifyToken, verifyAdmin, getAdminProfile);
+router.put("/profile", verifyToken, verifyAdmin, updateAdminProfile);
 
 // ==========================
 // 🍽 MENU MANAGEMENT
